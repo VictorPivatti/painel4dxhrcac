@@ -80,6 +80,16 @@ descartadas em silêncio, derrubando o MCI:
 
 O registro original está preservado no campo `_correcoesAplicadas` do `data.json`.
 
+## Ao alterar app.js ou style.css
+
+O `index.html` referencia esses dois arquivos com um número de versão
+(`app.js?v=2`). Sempre que um deles mudar, **incremente esse número** nas duas
+linhas do `index.html`. Sem isso, quem já abriu o painel continua vendo a versão
+antiga que ficou no cache do navegador, mesmo com o arquivo novo publicado.
+
+O `data.json` não precisa disso: ele já é lido com `cache: "no-store"`, então a
+atualização semanal dos dados aparece para todo mundo na hora.
+
 ## Estrutura dos arquivos
 
 ```
