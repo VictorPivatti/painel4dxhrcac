@@ -52,7 +52,7 @@ function buildModel(data) {
   const { projeto, mesesEsperado, politicas, semanas, cronograma, acoes } = data;
   const metaInicial = projeto.metaInicial;
   const metaFinal = projeto.metaFinal;
-  const pesoPorPolitica = (metaFinal - metaInicial) / politicas.length;
+  // Cada política vale 1/19 do índice; a meta de 80% equivale a 15,2 políticas.
 
   const semanaByNumero = new Map(semanas.map((s) => [s.numero, s]));
   const isMarco = (numero) => !!semanaByNumero.get(numero)?.marco;
@@ -78,7 +78,8 @@ function buildModel(data) {
   // --- MCI: conta apenas políticas concluídas ---
   const concluidas = Array.from(statusPorPolitica.values()).filter((a) => a.status === "concluido");
   const disseminadas = concluidas.length;
-  const mci = round2(metaInicial + disseminadas * pesoPorPolitica);
+  // MCI = proporção de políticas disseminadas sobre o total. 9/19 = 47,37%.
+  const mci = round2((disseminadas / politicas.length) * 100);
 
   // --- Evolução acumulada por mês ---
   // Ao fim de cada mês: MCI considerando as políticas concluídas até aquele mês.
@@ -92,7 +93,7 @@ function buildModel(data) {
       if (Number.isNaN(d.getTime())) return false;
       return d.getFullYear() === 2026 && d.getMonth() <= mes.mesIndex;
     }).length;
-    return round2(metaInicial + qtd * pesoPorPolitica);
+    return round2((qtd / politicas.length) * 100);
   });
 
   const previstas = politicas.length;

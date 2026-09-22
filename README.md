@@ -37,15 +37,13 @@ coluna de atraso daquela linha fica sem cálculo.
 
 ## Como os números são calculados
 
-**Peso de cada política**
-`(meta final − meta inicial) ÷ total de políticas` = `(80 − 11) ÷ 19` = **3,6316 pontos por política**
-
 **MCI (indicador principal)**
-`11 + (nº de políticas concluídas × 3,6316)`, arredondado em 2 casas.
-Hoje: `11 + (9 × 3,6316)` = **43,68%**
+`(nº de políticas concluídas ÷ total de políticas) × 100`, arredondado em 2 casas.
+Hoje: `9 ÷ 19` = **47,37%**
 
-Só entram políticas com status `concluido`. Uma política em andamento não pontua.
-Com as 19 concluídas, o MCI chega exatamente a 80%.
+Cada política vale 1/19 do índice, ou 5,26 pontos percentuais.
+Só entram políticas com status `concluido`; uma política em andamento não pontua.
+A meta de 80% equivale a 15,2 políticas, ou seja, é atingida na 16ª.
 
 **Evolução da Conformidade (Ago/Set/Out/Nov)**
 MCI **acumulado** ao fim de cada mês, considerando as políticas concluídas até ali.
