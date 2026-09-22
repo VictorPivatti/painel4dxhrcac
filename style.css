@@ -115,7 +115,13 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .barra-fill {
   position: absolute; inset: 0; width: 0%; border-radius: 999px; overflow: hidden;
   background: linear-gradient(90deg, #006078 0%, #0d84a6 25%, #e6ad00 60%, #0d84a6 75%, #006078 100%);
+  background-size: 170px 100%;
   transition: width 1s ease-out;
+  animation: correnteza 6s linear infinite;
+}
+@keyframes correnteza {
+  from { background-position: 0 0; }
+  to   { background-position: 170px 0; }
 }
 .barra-meta-marker {
   position: absolute; top: 0; height: 100%; width: 1px; background: rgba(0,34,10,.7);
@@ -131,14 +137,23 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .capy-wrap { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
 .capy-title { margin-right: .25rem; font-size: .75rem; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-foreground); }
 .capy-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .15rem .1rem; }
-.capy-item { display: inline-flex; width: 1.65rem; flex-shrink: 0; }
+.capy-item {
+  display: inline-flex; width: 1.65rem; flex-shrink: 0;
+  animation: boiar 3.4s ease-in-out infinite;
+}
+@keyframes boiar {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1.8px); }
+}
 .capy-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .capy-count { margin-left: .5rem; font-size: .75rem; color: var(--muted-foreground); }
 
 .card-atual {
   background: var(--gradient-jungle); color: #fff; border: none;
   display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
 }
+.atual-topo { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 .atual-kicker { font-size: .7rem; text-transform: uppercase; letter-spacing: .2em; color: var(--gold); }
 .atual-valor {
   margin-top: .5rem; font-family: 'Playfair Display', serif; font-weight: 700;
@@ -154,6 +169,27 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .atual-num { margin-top: .15rem; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.6rem; }
 .atual-num span { font-size: .8rem; color: var(--gold); }
 .atual-num-sm { margin-top: .15rem; font-weight: 600; font-size: 1rem; }
+
+/* --- Tuiuiú no rodapé do card --- */
+.atual-ave { margin-top: 1rem; display: flex; justify-content: center; }
+.tuiuiu { width: 8.5rem; height: auto; display: block; overflow: visible; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
+.asa { transform-origin: 62px 36px; }
+.asa-cima { animation: bater-cima 2.6s ease-in-out infinite; }
+.asa-baixo { animation: bater-baixo 2.6s ease-in-out infinite; }
+.tuiuiu-corpo { animation: planar 2.6s ease-in-out infinite; }
+
+@keyframes bater-cima {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(13deg); }
+}
+@keyframes bater-baixo {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-11deg); }
+}
+@keyframes planar {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(2.5px); }
+}
 
 .card-direcao { display: flex; gap: 1rem; align-items: flex-start; }
 .md-texto { margin-top: .5rem; max-width: 42rem; color: rgba(14,31,15,.8); }
@@ -264,6 +300,14 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 
 .rodape { text-align: center; font-size: .75rem; color: var(--muted-foreground); padding-bottom: 2rem; }
 .rodape-sub { font-size: .7rem; opacity: .8; }
+
+/* Quem configurou o sistema para reduzir movimento não recebe nenhuma animação */
+@media (prefers-reduced-motion: reduce) {
+  .asa-cima, .asa-baixo, .tuiuiu-corpo, .barra-fill, .capy-item {
+    animation: none !important;
+  }
+  .barra-fill { transition: none; }
+}
 
 @media (max-width: 720px) {
   .hero { padding: 3rem 1.25rem 6rem; }

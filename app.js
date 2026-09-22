@@ -267,6 +267,7 @@ function render(model) {
     const item = document.createElement("span");
     item.className = "capy-item";
     item.title = rotulo;
+    item.style.animationDelay = `${i * 130}ms`; // onda percorrendo a fileira
     item.innerHTML = iconeCapivara(estado);
     capyRow.appendChild(item);
   }
