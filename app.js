@@ -256,11 +256,23 @@ function render(model) {
   const capyRow = document.getElementById("capy-row");
   capyRow.innerHTML = "";
   for (let i = 0; i < model.totalPoliticas; i++) {
-    const dot = document.createElement("span");
-    dot.className = "capy-dot" + (i < model.disseminadas ? " on" : "");
-    capyRow.appendChild(dot);
+    const estado =
+      i < model.disseminadas ? "concluida"
+      : i < model.disseminadas + model.execucao ? "andamento"
+      : "pendente";
+    const rotulo =
+      estado === "concluida" ? "Política disseminada"
+      : estado === "andamento" ? "Em andamento, aguardando liberação"
+      : "Ainda não iniciada";
+    const item = document.createElement("span");
+    item.className = "capy-item";
+    item.title = rotulo;
+    item.innerHTML = iconeCapivara(estado);
+    capyRow.appendChild(item);
   }
-  document.getElementById("capy-count").textContent = `${model.disseminadas}/${model.totalPoliticas} disseminadas`;
+  const pendentes = model.totalPoliticas - model.disseminadas - model.execucao;
+  document.getElementById("capy-count").textContent =
+    `${model.disseminadas} disseminadas · ${model.execucao} em andamento · ${pendentes} a iniciar`;
 
   document.getElementById("atual-valor").innerHTML = fmtPct(model.mci) + "<span>%</span>";
   document.getElementById("atual-meta").textContent = `Meta consolidada – ${projeto.metaFinal}%`;
@@ -443,6 +455,41 @@ function renderRitmo(model) {
   secao.querySelector(".ritmo-leitura").textContent =
     `As ${atrasadasN} primeiras liberações passaram do prazo, com atraso médio de ${model.atrasoMedio} dias. ` +
     `As ${model.sequenciaNoPrazo} últimas saíram dentro da semana prevista.`;
+}
+
+/* Capivara na água, desenhada em SVG. Três estados:
+   - concluida: marrom cheia (política disseminada)
+   - andamento: marrom com patinho na cabeça (treinamento pronto, aguardando liberação)
+   - pendente: contorno claro (ainda não iniciada) */
+function iconeCapivara(estado) {
+  const concluida = estado === "concluida";
+  const andamento = estado === "andamento";
+  const ativa = concluida || andamento;
+
+  const corpo = ativa ? "#9a7350" : "#e4dfd0";
+  const traco = ativa ? "#5a4632" : "#cfc8b4";
+  const olho = ativa ? "#2b1f14" : "#cfc8b4";
+  const agua = ativa ? "#a9b0a0" : "#ded9c9";
+
+  const patinho = andamento
+    ? `<g>
+         <ellipse cx="18.5" cy="8.4" rx="3" ry="2.4" fill="#f5c518" stroke="${traco}" stroke-width="1.1"/>
+         <circle cx="21.1" cy="6.2" r="1.9" fill="#f5c518" stroke="${traco}" stroke-width="1.1"/>
+         <path d="M22.9 5.9 L25.2 6.7 L22.9 7.5 Z" fill="#f28c00" stroke="${traco}" stroke-width="0.9" stroke-linejoin="round"/>
+         <circle cx="21.6" cy="5.6" r="0.55" fill="#2b1f14"/>
+       </g>`
+    : "";
+
+  return `<svg viewBox="0 0 30 26" class="capy-svg" aria-hidden="true">
+      ${patinho}
+      <ellipse cx="11" cy="10.8" rx="2.6" ry="2.2" fill="${corpo}" stroke="${traco}" stroke-width="1.4"/>
+      <path d="M2.5 21 C2.5 17.5 4 15.8 6.5 15 C8 12.6 10.5 11.4 13.5 11.4 C21 11.4 27 14 27.5 21 Z"
+            fill="${corpo}" stroke="${traco}" stroke-width="1.4" stroke-linejoin="round"/>
+      <circle cx="7.2" cy="15.6" r="1.5" fill="${olho}"/>
+      <path d="M0.6 23.3 Q4.3 25 8 23.3" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M11.8 24 Q17.5 25.7 23.2 24" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M25 22.8 Q27.3 23.7 29.4 22.8" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>`;
 }
 
 function atrasoBadge(ad) {

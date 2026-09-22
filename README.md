@@ -83,7 +83,7 @@ O registro original está preservado no campo `_correcoesAplicadas` do `data.jso
 ## Ao alterar app.js ou style.css
 
 O `index.html` referencia esses dois arquivos com um número de versão
-(`app.js?v=2`). Sempre que um deles mudar, **incremente esse número** nas duas
+(`app.js?v=3`). Sempre que um deles mudar, **incremente esse número** nas duas
 linhas do `index.html`. Sem isso, quem já abriu o painel continua vendo a versão
 antiga que ficou no cache do navegador, mesmo com o arquivo novo publicado.
 

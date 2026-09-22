@@ -130,9 +130,9 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 
 .capy-wrap { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
 .capy-title { margin-right: .25rem; font-size: .75rem; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-foreground); }
-.capy-row { display: flex; flex-wrap: wrap; gap: .3rem; }
-.capy-dot { width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #c9c2a8; opacity: .35; }
-.capy-dot.on { background: var(--gold); opacity: 1; }
+.capy-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .15rem .1rem; }
+.capy-item { display: inline-flex; width: 1.65rem; flex-shrink: 0; }
+.capy-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .capy-count { margin-left: .5rem; font-size: .75rem; color: var(--muted-foreground); }
 
 .card-atual {
