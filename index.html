@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCI – OPSS 2026 | Cáceres, Princesinha do Pantanal</title>
+<meta name="description" content="Painel de acompanhamento do Projeto de Disseminação das Políticas Institucionais · MCI · OPSS 2026 · SEQUALI – HRCAC" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<main>
+  <header class="hero">
+    <img src="assets/pantanal-hero.jpg" alt="Pôr do sol no Pantanal de Cáceres" class="hero-img" />
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-kicker">🌿 Projeto de Disseminação das Políticas Institucionais · MCI · OPSS 2026</div>
+      <h1 id="hdr-titulo">Elevar o índice de conformidade na implantação das Diretrizes Institucionais, por mês de 11% para 80%</h1>
+      <p class="hero-meta">
+        <span>📅 Abertura: <strong id="hdr-abertura">—</strong></span>
+        <span>📅 Disseminação: <strong id="hdr-dissem">—</strong></span>
+        <span>📅 Prazo: <strong id="hdr-prazo">—</strong></span>
+        <span>📍 Cáceres-MT</span>
+        <span class="muted">· SEQUALI – HRCAC</span>
+      </p>
+      <div class="hero-badges">
+        <span class="badge-ok">☁️ <span id="atualizado-em">Dados publicados no repositório</span></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div id="alerta-datas" class="alerta-datas" hidden></div>
+
+    <section class="grid-top">
+      <div class="card card-evolucao">
+        <div class="card-head-icon">
+          <div class="icon-box icon-primary">
+            <div class="icon-label">MCI</div>
+            <div class="icon-sub">Resultado</div>
+          </div>
+          <div class="flex1">
+            <h2>Evolução da Conformidade</h2>
+            <div id="meses-grid" class="meses-grid"></div>
+            <div class="barra-wrap">
+              <div class="barra-track" id="barra-fill-wrap">
+                <div class="barra-fill" id="barra-fill"></div>
+                <div class="barra-meta-marker" id="barra-meta-marker">
+                  <span class="barra-meta-label" id="barra-meta-label">Meta</span>
+                </div>
+              </div>
+              <div class="barra-legenda">
+                <span>0%</span><span class="barra-legenda-meta">Meta</span><span>100%</span>
+              </div>
+              <div class="capy-wrap">
+                <span class="capy-title">Políticas</span>
+                <div class="capy-row" id="capy-row"></div>
+                <span class="capy-count" id="capy-count">0/19 disseminadas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card card-atual">
+        <div class="atual-kicker">🏆 Atual</div>
+        <div class="atual-valor" id="atual-valor">0<span>%</span></div>
+        <div class="atual-meta" id="atual-meta">Meta consolidada – 80%</div>
+        <div class="atual-grid">
+          <div>
+            <div class="atual-label">Meta Final</div>
+            <div class="atual-num" id="meta-final-valor">80<span>%</span></div>
+          </div>
+          <div>
+            <div class="atual-label">Prazo Final</div>
+            <div class="atual-num-sm" id="prazo-final-valor">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card-direcao">
+      <div class="icon-box icon-water">
+        <div class="icon-label">MD</div>
+        <div class="icon-sub">Direção</div>
+      </div>
+      <div>
+        <h2>O que vamos fazer para alcançar a meta</h2>
+        <p id="md-texto" class="md-texto"></p>
+      </div>
+    </section>
+
+    <section class="indicadores">
+      <div class="indicadores-head">
+        <div>
+          <div class="eyebrow">📈 Indicadores</div>
+          <h2>Painel de acompanhamento</h2>
+        </div>
+        <span id="mci-status-badge" class="badge-status">MCI</span>
+      </div>
+      <div class="cards-grid">
+        <div class="mini-card">
+          <div class="mini-label">MCI</div>
+          <div class="mini-valor" id="card-mci">0%</div>
+          <div class="mini-hint" id="card-mci-hint"></div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Previstas</div>
+          <div class="mini-valor" id="card-previstas">0</div>
+          <div class="mini-hint">políticas institucionais</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Realizadas</div>
+          <div class="mini-valor" id="card-realizadas">0</div>
+          <div class="mini-hint">políticas concluídas</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Execução</div>
+          <div class="mini-valor" id="card-execucao">0</div>
+          <div class="mini-hint">políticas em andamento</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Pendências</div>
+          <div class="mini-valor" id="card-pendencias">0</div>
+          <div class="mini-hint">deveriam ter iniciado</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">No prazo</div>
+          <div class="mini-valor" id="card-prazo">0/0</div>
+          <div class="mini-hint" id="card-prazo-hint">liberadas na semana prevista</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Semana atual</div>
+          <div class="mini-valor" id="card-semana">—</div>
+          <div class="mini-hint" id="card-semana-hint"></div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Reunião</div>
+          <div class="mini-valor" id="card-reuniao">0</div>
+          <div class="mini-hint">reuniões semanais realizadas</div>
+        </div>
+      </div>
+      <div class="proximas-card">
+        <div class="proximas-titulo">Próximas disseminações</div>
+        <ul class="proximas-lista" id="proximas-lista"></ul>
+      </div>
+    </section>
+
+    <section class="card ritmo" id="secao-ritmo" hidden>
+      <div class="ritmo-head">
+        <div>
+          <div class="eyebrow">📉 Ritmo de liberação</div>
+          <h2>Estamos acelerando?</h2>
+          <p class="ritmo-sub">Cada barra é uma política, em ordem de semana. Acima da linha, o treinamento foi liberado dentro da semana prevista; abaixo, passou do prazo. A altura é a distância em dias.</p>
+        </div>
+        <div class="ritmo-chave">
+          <span><i class="dot" style="background:#d93500"></i>Passou do prazo</span>
+          <span><i class="dot" style="background:#0080a3"></i>Dentro da semana</span>
+        </div>
+      </div>
+      <div class="ritmo-svg"></div>
+      <p class="ritmo-leitura"></p>
+      <p class="ritmo-nota">Os valores linha a linha estão na coluna Atraso do placar abaixo.</p>
+    </section>
+
+    <section class="card placar">
+      <div class="placar-head">
+        <div>
+          <div class="eyebrow">🍃 Placar Semanal</div>
+          <h2>Estamos ganhando?</h2>
+          <p class="placar-sub">Planejamento oficial e execução real no mesmo placar. O Período Previsto é a semana planejada; o Início da Disseminação é a data em que o treinamento foi liberado no Humand. O atraso é contado a partir do fim da semana prevista.</p>
+        </div>
+        <div class="legenda">
+          <span><i class="dot dot-success"></i>Concluído</span>
+          <span><i class="dot dot-danger"></i>Em atraso</span>
+          <span><i class="dot dot-warning"></i>Em andamento</span>
+          <span><i class="dot dot-water"></i>Reagendado</span>
+          <span><i class="dot dot-muted"></i>Não concluído</span>
+        </div>
+      </div>
+      <div class="placar-table-wrap">
+        <div class="placar-cols-head">
+          <div>Semana</div>
+          <div>Política Institucional</div>
+          <div>Período Previsto</div>
+          <div>Setor Responsável</div>
+          <div>Início da Disseminação</div>
+          <div>Atraso</div>
+          <div>Status</div>
+          <div>Reunião Realizada?</div>
+        </div>
+        <div id="placar-body" class="placar-body"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="rodape">
+    <div>MCI · OPSS 2026 · Cáceres / MT — Princesinha do Pantanal</div>
+    <div class="rodape-sub">SEQUALI – HRCAC</div>
+  </footer>
+</main>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="trimGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e6ad00" />
+      <stop offset="100%" stop-color="#093e1b" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<script src="app.js"></script>
+</body>
+</html>
