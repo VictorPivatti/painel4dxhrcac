@@ -338,3 +338,109 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
   }
   .placar-marco { min-width: 0; }
 }
+
+/* =====================================================================
+   POLIMENTO v5 - leitura em TV (reunião) e no computador (semana)
+   Tudo abaixo sobrescreve o que está acima. Para desfazer, basta apagar
+   este bloco.
+   ===================================================================== */
+
+/* Números alinhados (colunas de datas, dias e porcentagens não "dançam") */
+.mini-valor, .atual-valor, .atual-num, .mes-valor, .col-semana,
+.col-periodo, .col-inicio, .atraso-ok, .atraso-late, .atraso-prog,
+.capy-count, .hero-meta strong { font-variant-numeric: tabular-nums lining-nums; }
+
+/* Piso de legibilidade: nada abaixo de ~12px no computador */
+.mini-label, .barra-meta-label, .mes-esperado { font-size: .72rem; }
+.mini-hint, .prox-detalhe, .atraso-ok, .atraso-late, .atraso-prog, .atraso-na,
+.status-pill, .atual-label, .atual-meta, .mes-label, .marco-sub, .marco-relatorio,
+.proximas-titulo, .eyebrow, .atual-kicker { font-size: .78rem; }
+.placar-sub, .ritmo-sub { font-size: .85rem; line-height: 1.5; }
+.placar-cols-head { font-size: .72rem; }
+.col-periodo, .col-inicio, .col-setor { font-size: .85rem; }
+.mini-hint { line-height: 1.35; }
+
+/* Hero mais baixo: o placar precisa aparecer sem rolar a tela */
+.hero { padding: 3.25rem 1.5rem 6.5rem; }
+.hero-content h1 { font-size: clamp(1.6rem, 3.1vw, 2.5rem); max-width: 54rem; text-wrap: balance; }
+.hero-meta { font-size: .9rem; }
+.hero-meta strong { color: #fff; }
+.hero-meta, .hero-kicker { text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.5); }
+.status-pill { white-space: nowrap; }
+/* 8 cartões lado a lado só em tela grande; no notebook, 2 linhas de 4 */
+@media (min-width: 1024px) and (max-width: 1599px) { .cards-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Card "Atual": o número é o protagonista, com o veredito logo abaixo */
+.atual-valor { font-size: clamp(3.25rem, 7vw, 5.75rem); letter-spacing: -.02em; }
+.atual-status {
+  align-self: flex-start; margin-top: .75rem;
+  display: inline-flex; align-items: center; gap: .45rem;
+  border-radius: 999px; padding: .35rem .85rem;
+  font-size: .85rem; font-weight: 700; letter-spacing: .02em;
+}
+.atual-status::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; }
+.atual-status.tone-success { background: rgba(35,161,54,.22); color: #8ff0a4; }
+.atual-status.tone-warning { background: rgba(238,169,0,.2); color: #ffd66b; }
+.atual-status.tone-danger  { background: rgba(230,45,40,.25); color: #ff9a96; }
+.atual-num-sm { font-size: 1.15rem; }
+
+/* Gauges dos meses um pouco maiores */
+.mes-gauge { width: 5.5rem; height: 5.5rem; }
+.mes-valor { font-size: 1.3rem; }
+
+/* Mini-cards: respiro e número maior */
+.mini-card { padding: 1rem 1.1rem; box-shadow: 0 8px 24px -16px #00220a40; transition: transform .15s ease, box-shadow .15s ease; }
+.mini-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-elegant); }
+.mini-valor { font-size: 2rem; line-height: 1.1; }
+
+/* Placar: faixa lateral colorida por status, para bater o olho e ler */
+.placar-row { border-left-width: 5px; transition: background .15s ease; }
+.placar-row:has(.status-concluido)  { border-left-color: var(--success); }
+.placar-row:has(.status-atraso)     { border-left-color: var(--danger); background: rgba(230,45,40,.05); }
+.placar-row:has(.status-andamento)  { border-left-color: var(--warning); background: rgba(238,169,0,.07); }
+.placar-row:has(.status-reagendado) { border-left-color: var(--water); }
+.placar-row:has(.status-nao)        { border-left-color: #c9c6b0; background: #fff; }
+.placar-row:hover { background: rgba(248,234,206,.55); }
+.col-politica { font-size: .95rem; }
+.placar-row > div:last-child { font-size: .9rem; font-weight: 500; }
+.placar-cols-head { position: sticky; top: 0; background: var(--card); z-index: 1; padding-top: .5rem; }
+
+/* Cartões de seção um pouco mais arejados */
+.card { padding: 1.75rem; }
+.content { gap: 1.75rem; }
+
+/* ---------- Telas grandes (TV da reunião) ----------
+   Em vez de deixar o painel "perdido" no meio da tela com letra pequena,
+   aumentamos a base: como tudo é medido em rem, o painel inteiro escala. */
+@media (min-width: 1600px) {
+  html { font-size: 19px; }
+  .content, .hero-content { max-width: 1400px; }
+}
+@media (min-width: 2400px) {
+  html { font-size: 24px; }
+  .content, .hero-content { max-width: 1760px; }
+}
+
+@media (max-width: 720px) {
+  .hero { padding: 2.5rem 1.25rem 5.5rem; }
+  .card { padding: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-card, .placar-row { transition: none; }
+  .mini-card:hover { transform: none; }
+}
+
+/* --- Mascotes v6: tuiuiú em pé e capivaras redesenhadas --- */
+.tuiuiu { width: 9.5rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
+.tuiuiu-corpo { transform-origin: 55px 100px; animation: tuiuiu-respira 3.2s ease-in-out infinite; }
+.tuiuiu-cabeca { transform-origin: 64px 47px; animation: tuiuiu-olha 6s ease-in-out infinite; }
+.tuiuiu-olho { transform-origin: 82px 15.5px; animation: tuiuiu-pisca 5s infinite; }
+@keyframes tuiuiu-respira { 0%,100% { transform: translateY(0); } 50% { transform: translateY(1.2px) scaleY(.99); } }
+@keyframes tuiuiu-olha { 0%,60%,100% { transform: rotate(0); } 70%,85% { transform: rotate(-6deg); } }
+@keyframes tuiuiu-pisca { 0%,94%,100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+.capy-item { width: 1.75rem; }
+.capy-passaro { transform-origin: 30px 2px; animation: passaro-balanca 2.4s ease-in-out infinite; }
+@keyframes passaro-balanca { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .tuiuiu-corpo, .tuiuiu-cabeca, .tuiuiu-olho, .capy-passaro { animation: none !important; }
+}

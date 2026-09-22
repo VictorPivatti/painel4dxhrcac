@@ -283,6 +283,12 @@ function render(model) {
   const badge = document.getElementById("mci-status-badge");
   badge.textContent = `MCI: ${model.statusMci.label}`;
   badge.className = "badge-status tone-" + model.statusMci.tone;
+  const atualStatus = document.getElementById("atual-status");
+  if (atualStatus) {
+    atualStatus.textContent = model.statusMci.label;
+    atualStatus.className = "atual-status tone-" + model.statusMci.tone;
+    atualStatus.hidden = false;
+  }
 
   // Cards
   document.getElementById("card-mci").textContent = `${fmtPct(model.mci)}%`;
@@ -460,36 +466,45 @@ function renderRitmo(model) {
 
 /* Capivara na água, desenhada em SVG. Três estados:
    - concluida: marrom cheia (política disseminada)
-   - andamento: marrom com patinho na cabeça (treinamento pronto, aguardando liberação)
+   - andamento: marrom com passarinho na cabeça (treinamento pronto, aguardando liberação)
    - pendente: contorno claro (ainda não iniciada) */
 function iconeCapivara(estado) {
   const concluida = estado === "concluida";
   const andamento = estado === "andamento";
   const ativa = concluida || andamento;
 
-  const corpo = ativa ? "#9a7350" : "#e4dfd0";
-  const traco = ativa ? "#5a4632" : "#cfc8b4";
-  const olho = ativa ? "#2b1f14" : "#cfc8b4";
-  const agua = ativa ? "#a9b0a0" : "#ded9c9";
+  const corpo   = ativa ? "#a8784c" : "#ebe6d6";
+  const sombra  = ativa ? "#8a5f3a" : "#e0dac8";
+  const focinho = ativa ? "#7a5234" : "#ddd6c2";
+  const traco   = ativa ? "#4e3521" : "#cfc8b4";
+  const olho    = ativa ? "#20150d" : "#cfc8b4";
 
-  const patinho = andamento
-    ? `<g>
-         <ellipse cx="18.5" cy="8.4" rx="3" ry="2.4" fill="#f5c518" stroke="${traco}" stroke-width="1.1"/>
-         <circle cx="21.1" cy="6.2" r="1.9" fill="#f5c518" stroke="${traco}" stroke-width="1.1"/>
-         <path d="M22.9 5.9 L25.2 6.7 L22.9 7.5 Z" fill="#f28c00" stroke="${traco}" stroke-width="0.9" stroke-linejoin="round"/>
-         <circle cx="21.6" cy="5.6" r="0.55" fill="#2b1f14"/>
+  const passarinho = andamento
+    ? `<g class="capy-passaro">
+         <ellipse cx="29" cy="1.2" rx="3.1" ry="2.5" fill="#f5c518" stroke="${traco}" stroke-width=".9"/>
+         <circle cx="31.4" cy="-1.3" r="2" fill="#f5c518" stroke="${traco}" stroke-width=".9"/>
+         <path d="M33.2 -1.6 L35.4 -.9 L33.2 -.2 Z" fill="#f28c00" stroke="${traco}" stroke-width=".7" stroke-linejoin="round"/>
+         <circle cx="31.9" cy="-1.8" r=".5" fill="#20150d"/>
        </g>`
     : "";
 
-  return `<svg viewBox="0 0 30 26" class="capy-svg" aria-hidden="true">
-      ${patinho}
-      <ellipse cx="11" cy="10.8" rx="2.6" ry="2.2" fill="${corpo}" stroke="${traco}" stroke-width="1.4"/>
-      <path d="M2.5 21 C2.5 17.5 4 15.8 6.5 15 C8 12.6 10.5 11.4 13.5 11.4 C21 11.4 27 14 27.5 21 Z"
-            fill="${corpo}" stroke="${traco}" stroke-width="1.4" stroke-linejoin="round"/>
-      <circle cx="7.2" cy="15.6" r="1.5" fill="${olho}"/>
-      <path d="M0.6 23.3 Q4.3 25 8 23.3" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M11.8 24 Q17.5 25.7 23.2 24" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M25 22.8 Q27.3 23.7 29.4 22.8" fill="none" stroke="${agua}" stroke-width="1.4" stroke-linecap="round"/>
+  return `<svg viewBox="0 -4 40 31" class="capy-svg" aria-hidden="true">
+      <path d="M9 22 L9 25.6 M13 22.5 L13 25.6 M22 22 L22 25.6 M26 21 L26 25.6"
+            stroke="${traco}" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M9 22 L9 25.2 M13 22.5 L13 25.2 M22 22 L22 25.2 M26 21 L26 25.2"
+            stroke="${sombra}" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M5 22.5 C2.2 21.5 2 16.5 4 13.5 C6.5 9.8 11.5 9 17.5 9 C21 9 23.2 8 25 6.4
+               C27.8 4.3 33 4.2 36.3 5.8 C38.6 7 39.3 9.4 39.3 12.4 C39.3 15.6 38 17.2 35.4 17.6
+               C32.6 18 30.6 18.8 29.2 20.4 C27.8 22 25.6 23 22.5 23 L7 23 C6.3 23 5.6 22.8 5 22.5 Z"
+            fill="${corpo}" stroke="${traco}" stroke-width="1.3" stroke-linejoin="round"/>
+      <path d="M34.5 7 C37.5 7.4 39.2 9.4 39.2 12.4 C39.2 15.4 38 17 35.4 17.5 C34 15.5 33.8 10 34.5 7 Z"
+            fill="${focinho}" opacity=".55"/>
+      <ellipse cx="26.6" cy="5.2" rx="1.9" ry="1.5" fill="${focinho}" stroke="${traco}" stroke-width="1.1"/>
+      <circle cx="31" cy="9.6" r="1.25" fill="${olho}"/>
+      ${ativa ? `<circle cx="31.45" cy="9.1" r=".42" fill="#fff"/>
+      <ellipse cx="32.2" cy="13.3" rx="1.7" ry="1" fill="#e98a7a" opacity=".55"/>` : ""}
+      <path d="M37.6 8.6 L38.5 9.6" stroke="${traco}" stroke-width="1" stroke-linecap="round"/>
+      ${passarinho}
     </svg>`;
 }
 
