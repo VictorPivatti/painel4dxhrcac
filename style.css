@@ -444,3 +444,18 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .tuiuiu-corpo, .tuiuiu-cabeca, .tuiuiu-olho, .capy-passaro { animation: none !important; }
 }
+
+/* --- Tuiuiú v7: em pé na água, sem mover partes entre si --- */
+.tuiuiu { width: 8rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+.tuiuiu-corpo, .tuiuiu-cabeca { animation: none; }
+.tuiuiu-ave { transform-box: fill-box; transform-origin: 50% 100%; animation: tuiuiu-respira7 3.6s ease-in-out infinite; }
+@keyframes tuiuiu-respira7 { 0%,100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(.6px) scaleY(.992); } }
+.tuiuiu-olho { transform-box: fill-box; transform-origin: 50% 50%; animation: tuiuiu-pisca 5s infinite; }
+.tuiuiu-agua ellipse { transform-box: fill-box; transform-origin: 50% 50%; animation: tuiuiu-onda 3.6s ease-out infinite; }
+.tuiuiu-agua ellipse + ellipse { animation-delay: 1.8s; }
+@keyframes tuiuiu-onda { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.15); opacity: 0; } }
+.atual-ave { margin-top: .5rem; }
+@media (prefers-reduced-motion: reduce) { .tuiuiu-ave, .tuiuiu-agua ellipse { animation: none !important; } }
+.card-evolucao { display: flex; align-items: center; }
+.card-evolucao > .card-head-icon { width: 100%; }
+.capy-item { width: 1.6rem; }

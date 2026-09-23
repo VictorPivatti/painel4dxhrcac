@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=6" />
+<link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 <main>
@@ -81,30 +81,62 @@
           </div>
         </div>
         <div class="atual-ave">
-          <svg viewBox="0 0 124 112" class="tuiuiu" role="img" aria-label="Tuiuiú">
-            <ellipse cx="58" cy="107" rx="22" ry="3" fill="rgba(0,0,0,.28)"/>
-            <g class="tuiuiu-pernas" stroke="#7d888c" stroke-width="3" stroke-linecap="round" fill="none">
-              <path d="M52 80 L50 105 M50 105 L44 106.5 M50 105 L54 107"/>
-              <path d="M62 80 L64 105 M64 105 L58 106.5 M64 105 L69 106.5"/>
+          <svg viewBox="0 0 130 150" class="tuiuiu" role="img" aria-label="Tuiuiú">
+            <defs>
+              <linearGradient id="tui-corpo" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff"/><stop offset=".65" stop-color="#f1f4f3"/><stop offset="1" stop-color="#d6e0e3"/>
+              </linearGradient>
+              <linearGradient id="tui-asa" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#f7f9f8"/><stop offset="1" stop-color="#dbe4e7"/>
+              </linearGradient>
+              <linearGradient id="tui-colar" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#b8241c"/><stop offset=".55" stop-color="#e2463a"/><stop offset="1" stop-color="#c7322a"/>
+              </linearGradient>
+              <linearGradient id="tui-bico" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#4a5256"/><stop offset="1" stop-color="#15191b"/>
+              </linearGradient>
+              <radialGradient id="tui-brilho" cx=".5" cy=".5" r=".5">
+                <stop offset="0" stop-color="#e6ad00" stop-opacity=".22"/><stop offset="1" stop-color="#e6ad00" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="62" cy="80" rx="58" ry="62" fill="url(#tui-brilho)"/>
+            <g class="tuiuiu-agua" fill="none" stroke="#7fb8c9" stroke-linecap="round">
+              <ellipse cx="60" cy="138" rx="30" ry="4.2" stroke-width="1.4" opacity=".55"/>
+              <ellipse cx="60" cy="138" rx="17" ry="2.4" stroke-width="1.2" opacity=".8"/>
             </g>
-            <g class="tuiuiu-corpo">
-              <path d="M26 66 L14 76 L22 76 L18 83 L31 74 Z" fill="#2b2f31" stroke="#5d686d" stroke-width="1"/>
-              <path d="M28 62 C27 46 43 37 60 39 C75 41 83 52 80 65 C77 78 64 86 50 85 C37 84 29 76 28 62 Z"
-                    fill="#fdfdfb" stroke="#c9d3d6" stroke-width="1.5"/>
-              <path d="M34 60 C38 50 50 47 62 52 C66 60 62 72 50 76 C41 76 35 70 34 60 Z"
-                    fill="#eef2f1" stroke="#c9d3d6" stroke-width="1.2"/>
-              <path d="M40 64 Q47 67 54 64 M42 70 Q48 72.5 55 69.5" stroke="#b9c9cf" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-              <g class="tuiuiu-cabeca">
-                <path d="M64 47 C69 39 72 31 77 23" stroke="#1d1f20" stroke-width="10" stroke-linecap="round" fill="none"/>
-                <path d="M59.5 49 C62.5 46.5 65.5 44 68.5 41" stroke="#d7372f" stroke-width="11" stroke-linecap="round" fill="none"/>
-                <circle cx="80" cy="18" r="10" fill="#1d1f20" stroke="#5d686d" stroke-width="1.2"/>
-                <path d="M87.5 12.5 C97 12 108 12.5 118 10.5 C116 15.5 103 21 89 24 Z" fill="#33393c" stroke="#1d1f20" stroke-width="1.2" stroke-linejoin="round"/>
-                <path d="M89 18.5 C99 17.5 108 15.5 116 12" stroke="#50585c" stroke-width="1" fill="none"/>
-                <g class="tuiuiu-olho">
-                  <circle cx="81.5" cy="15.5" r="3.6" fill="#fdfdfb"/>
-                  <circle cx="82.4" cy="15.7" r="2.2" fill="#141414"/>
-                  <circle cx="83.2" cy="14.8" r=".8" fill="#fff"/>
-                </g>
+            <g class="tuiuiu-ave">
+              <g stroke="#8d9a9f" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="3">
+                <path d="M53 96 L51 116 L53 137"/>
+                <path d="M64 96 L67 116 L66 137"/>
+              </g>
+              <path d="M75 80 C82 70 73 60 76 49" stroke="#1b1f21" stroke-width="12" stroke-linecap="round" fill="none"/>
+              <path d="M76 50 C77 40 81 33 84 27" stroke="#1b1f21" stroke-width="9" stroke-linecap="round" fill="none"/>
+              <path d="M77.8 47 C78.6 40 81 34.5 83.5 30" stroke="#3d4548" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".8"/>
+              <path d="M74 82 C80 74 79.5 68 77.5 61" stroke="url(#tui-colar)" stroke-width="14" stroke-linecap="round" fill="none"/>
+              <path d="M76.6 64 Q78.6 66 77.4 69 M75.5 71 Q77.5 73 76 76" stroke="#f58a7f" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".8"/>
+              <g transform="rotate(-7 55 86)">
+              <path d="M24 88 C24 74 38 66 56 66 C72 66 84 74 84 86 C84 97 71 102 55 102 C40 102 28 98 24 88 Z"
+                    fill="url(#tui-corpo)" stroke="#a9b8bd" stroke-width="1.3"/>
+              <path d="M26 90 L13 95 L19 96.5 L14 100 L29 96 Z" fill="#eef2f1" stroke="#a9b8bd" stroke-width="1.1" stroke-linejoin="round"/>
+              <path d="M30 86 C38 75 56 72 74 79 C70 88 58 94 44 95 C38 95 33 92 30 86 Z"
+                    fill="url(#tui-asa)" stroke="#b7c5ca" stroke-width="1.1"/>
+              <path d="M44 95 C39 96 33 95.5 29 93 C33 97 39 98.5 45 97.6 Z M52 93.6 C47 96.5 41 98.6 35 99 C41 100.5 48 99.5 53 96.5 Z"
+                    fill="#e3eaec" stroke="#b7c5ca" stroke-width=".9" stroke-linejoin="round"/>
+              <path d="M40 84 Q49 86.5 58 83 M44 89 Q52 91 60 87.5" stroke="#c6d2d6" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <path d="M34 79 C42 72 54 70 64 71" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/>
+              </g>
+              <g transform="translate(84 25) scale(1.12) translate(-84 -25)">
+              <path d="M90 20.5 C101 19.2 112 17.6 124 14 C124.6 15.8 123.6 17.6 121.8 18.6 C111 22.5 100 26 91 28 Z"
+                    fill="url(#tui-bico)" stroke="#101314" stroke-width=".9" stroke-linejoin="round"/>
+              <path d="M91.5 24.4 C102 23 112 20.6 122.5 16.8" stroke="#5c666a" stroke-width=".8" fill="none"/>
+              <path d="M92 21.3 C100 20.4 108 19.4 116 17.6" stroke="#6d777b" stroke-width=".7" fill="none" opacity=".7"/>
+              <path d="M78 25 C78 18.5 83 15.5 88 16.5 C92 17.3 93.5 21 92.5 25 C91.5 29 86 31 82 30 C79.5 29.3 78 27.5 78 25 Z" fill="#1b1f21"/>
+              <path d="M80.5 20.5 C82 18.2 85 17.3 87.5 17.8" stroke="#4a5357" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+              <g class="tuiuiu-olho">
+                <circle cx="87" cy="22.2" r="2.5" fill="#f6f2e6"/>
+                <circle cx="87.5" cy="22.4" r="1.55" fill="#101010"/>
+                <circle cx="88.1" cy="21.7" r=".55" fill="#fff"/>
+              </g>
               </g>
             </g>
           </svg>
@@ -242,6 +274,6 @@
   </defs>
 </svg>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
