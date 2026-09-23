@@ -12,10 +12,10 @@
     "medidaDirecao": "Realizar 01 reunião semanal com os guardiões das políticas de 1 para 1, até 30/11/2026."
   },
   "mesesEsperado": [
-    { "label": "Ago", "mesIndex": 7, "esperado": 28.25 },
-    { "label": "Set", "mesIndex": 8, "esperado": 45.5 },
-    { "label": "Out", "mesIndex": 9, "esperado": 62.75 },
-    { "label": "Nov", "mesIndex": 10, "esperado": 80 }
+    { "label": "Ago", "mesIndex": 7 },
+    { "label": "Set", "mesIndex": 8 },
+    { "label": "Out", "mesIndex": 9 },
+    { "label": "Nov", "mesIndex": 10 }
   ],
   "politicas": [
     { "nome": "Ensino e Pesquisa", "setor": "Ensino e Pesquisa" },
