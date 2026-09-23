@@ -81,6 +81,14 @@ function buildModel(data) {
   // MCI = proporção de políticas disseminadas sobre o total. 9/19 = 47,37%.
   const mci = round2((disseminadas / politicas.length) * 100);
 
+  // --- Prazo (fim da semana prevista) de cada política, pelo cronograma ---
+  const previstoFimPorPolitica = new Map();
+  for (const [semanaStr, nomes] of Object.entries(cronograma)) {
+    const semana = semanaByNumero.get(Number(semanaStr));
+    if (!semana) continue;
+    for (const nome of nomes) previstoFimPorPolitica.set(nome, semana.fim);
+  }
+
   // --- Evolução acumulada por mês ---
   // Ao fim de cada mês: MCI considerando as políticas concluídas até aquele mês.
   const mesAtual = hoje.getMonth();
@@ -94,6 +102,17 @@ function buildModel(data) {
       return d.getFullYear() === 2026 && d.getMonth() <= mes.mesIndex;
     }).length;
     return round2((qtd / politicas.length) * 100);
+  });
+
+  // --- "Esperado" de cada mês: calculado a partir do cronograma real, não fixo. ---
+  // É a % de políticas cujo prazo (fim da semana prevista) já venceu até o fim daquele mês.
+  const mesesEsperadoCalc = mesesEsperado.map((mes) => {
+    const fimDoMes = new Date(2026, mes.mesIndex + 1, 0); // último dia do mês
+    const qtd = politicas.filter((p) => {
+      const fim = previstoFimPorPolitica.get(p.nome);
+      return fim && parseDateBR(fim) <= fimDoMes;
+    }).length;
+    return { ...mes, esperado: round2((qtd / politicas.length) * 100) };
   });
 
   const previstas = politicas.length;
@@ -147,12 +166,6 @@ function buildModel(data) {
     : -1;
 
   // --- Pendências: prazo da semana já venceu e a política não avançou ---
-  const previstoFimPorPolitica = new Map();
-  for (const [semanaStr, nomes] of Object.entries(cronograma)) {
-    const semana = semanaByNumero.get(Number(semanaStr));
-    if (!semana) continue;
-    for (const nome of nomes) previstoFimPorPolitica.set(nome, semana.fim);
-  }
   let pendencias = 0;
   for (const p of politicas) {
     const fim = previstoFimPorPolitica.get(p.nome);
@@ -168,7 +181,20 @@ function buildModel(data) {
     semanaAtual = passadas.length ? passadas[passadas.length - 1] : null;
   }
 
-  const reunioes = 1 + linhas.filter((a) => a.reuniao === "Sim").length;
+  // Conta por política, não por linha: um reagendamento não pode duplicar a reunião.
+  const politicasComReuniao = new Set(linhas.filter((a) => a.reuniao === "Sim").map((a) => a.politica));
+  const reunioes = 1 + politicasComReuniao.size;
+
+  // --- Status de exibição: força "Em atraso" quando o prazo da semana já venceu
+  // e a política não avançou (concluído/reagendado), mesmo que o campo "status"
+  // no data.json ainda diga "andamento" ou "nao" por falta de atualização manual.
+  const statusExibicaoPorChave = new Map();
+  for (const a of linhas) {
+    const semana = semanaByNumero.get(a.semana);
+    const vencido = semana && hoje > parseDateBR(semana.fim);
+    const auto = vencido && a.status !== "concluido" && a.status !== "reagendado";
+    statusExibicaoPorChave.set(`${a.semana}::${a.politica}`, auto ? "atraso" : a.status);
+  }
 
   // --- Próximas disseminações ---
   const proximas = [];
@@ -182,19 +208,20 @@ function buildModel(data) {
   }
 
   const mesIdxAtual = Math.min(3, Math.max(0, mesAtual - 7));
-  const esperadoAtual = mesesEsperado[mesIdxAtual].esperado;
+  const esperadoAtual = mesesEsperadoCalc[mesIdxAtual].esperado;
 
   let statusMci = { label: "Atenção", tone: "danger" };
   if (mci >= metaFinal) statusMci = { label: "Meta atingida", tone: "success" };
   else if (mci >= esperadoAtual) statusMci = { label: "Dentro do esperado", tone: "warning" };
 
   return {
-    projeto, mesesEsperado, evolucaoMensal, esperadoAtual,
+    projeto, mesesEsperado: mesesEsperadoCalc, evolucaoMensal, esperadoAtual,
     disseminadas, totalPoliticas: politicas.length, mci,
     previstas, realizadas, execucao, pendencias, semanaAtual, reunioes,
     proximas3: proximas.slice(0, 3), statusMci, datasInvalidas,
     noPrazo, totalIniciadas: iniciadas.length, atrasoMedio,
     aderenciaPorChave, serieRitmo, sequenciaNoPrazo, indiceVirada,
+    statusExibicaoPorChave,
     linhasOrdenadas: [...linhas].sort((a, b) => a.semana - b.semana),
     semanaByNumero,
     politicaSetor: new Map(politicas.map((p) => [p.nome, p.setor])),
@@ -342,6 +369,7 @@ function render(model) {
     const semanaInfo = model.semanaByNumero.get(linha.semana);
     const setor = model.politicaSetor.get(linha.politica) || "";
     const ad = model.aderenciaPorChave.get(`${linha.semana}::${linha.politica}`);
+    const statusExibicao = model.statusExibicaoPorChave.get(`${linha.semana}::${linha.politica}`) || linha.status;
     const row = document.createElement("div");
     row.className = "placar-row" + (linha.status === "concluido" ? " row-ok" : "");
     row.innerHTML = `
@@ -351,7 +379,7 @@ function render(model) {
       <div class="col-setor" data-rotulo="Setor">${setor}</div>
       <div class="col-inicio" data-rotulo="Liberado">${linha.inicio ? (dataValida(linha.inicio) ? linha.inicio : `<span class="data-ruim" title="Formato inválido">${linha.inicio}</span>`) : "—"}</div>
       <div class="col-atraso" data-rotulo="Atraso">${atrasoBadge(ad)}</div>
-      <div class="col-status" data-rotulo="Status"><span class="status-pill status-${linha.status}">${STATUS_LABEL[linha.status]}</span></div>
+      <div class="col-status" data-rotulo="Status"><span class="status-pill status-${statusExibicao}">${STATUS_LABEL[statusExibicao]}</span></div>
       <div class="col-reuniao" data-rotulo="Reunião">${linha.reuniao}</div>
     `;
     placarEl.appendChild(row);

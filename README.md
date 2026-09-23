@@ -50,13 +50,25 @@ MCI **acumulado** ao fim de cada mês, considerando as políticas concluídas at
 É diretamente comparável à linha "Esperado" logo abaixo de cada círculo.
 Meses que ainda não começaram mostram `—`, não zero.
 
+A linha **"Esperado"** de cada mês não é um número fixo digitado no `data.json` — é
+calculada automaticamente a partir do `cronograma`: é a % de políticas cujo prazo (fim
+da semana prevista) já venceu até o fim daquele mês. Ela sobe do jeito que o cronograma
+semana a semana realmente exige, não numa reta artificial. Isso significa que a meta
+mensal muda sozinha se o `cronograma` for editado (política movida de semana, por
+exemplo) — não precisa (e não deve) editar um valor de "esperado" à parte.
+
+O mesmo valor calculado para o mês corrente também decide o selo "MCI: Dentro do
+esperado / Atenção / Meta atingida" no topo do painel.
+
 **Previstas** — total de políticas institucionais (19).
 **Realizadas** — políticas concluídas (mesmo número das disseminadas).
 **Execução** — políticas com status `andamento`.
 **Pendências** — políticas cuja semana prevista já terminou e que não estão em `concluido`, `andamento` ou `reagendado`.
 **No prazo** — políticas liberadas dentro da semana prevista ÷ políticas já liberadas.
 **Semana atual** — semana do cronograma que contém a data de hoje.
-**Reunião** — `1` (reunião de abertura, fixo) + nº de linhas com `reuniao: "Sim"`.
+**Reunião** — `1` (reunião de abertura, fixo) + nº de **políticas** (não de linhas) com
+alguma linha marcada `reuniao: "Sim"`. Se uma política for reagendada e aparecer em mais
+de uma linha, ela só conta 1 reunião, mesmo que mais de uma linha diga "Sim".
 
 **Atraso (coluna do placar)**
 Contado a partir do **fim** da semana prevista, porque o prazo de cada política é a semana
@@ -65,6 +77,13 @@ Data futura = "Programado".
 
 Quando uma política aparece em mais de uma linha, vale a linha de status mais avançado
 (`concluido` > `andamento` > `reagendado` > `atraso` > `nao`).
+
+O status `atraso` também pode aparecer **sem** ninguém ter digitado isso no `data.json`:
+se o prazo da semana prevista já venceu e a linha continua `andamento` ou `nao`, o
+placar mostra "Em atraso" automaticamente na exibição, mesmo que o campo `status`
+salvo ainda diga outra coisa. O valor gravado no arquivo não muda — só a cor exibida.
+Isso evita que uma política vencida fique com a pill neutra ("Não concluído") só
+porque ninguém atualizou o campo manualmente naquela semana.
 
 ## Correções aplicadas na migração
 
