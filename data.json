@@ -88,7 +88,7 @@
     { "semana": 6, "politica": "Gestão de Contratos", "inicio": "31/08/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 7, "politica": "Comunicação e Marketing", "inicio": "08/09/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 8, "politica": "Controle Interno", "inicio": "15/09/2026", "status": "concluido", "reuniao": "Sim" },
-    { "semana": 9, "politica": "Planejamento Estratégico", "inicio": "23/09/2026", "status": "concluido", "reuniao": "Agendada" },
+    { "semana": 9, "politica": "Planejamento Estratégico", "inicio": "23/09/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 10, "politica": "Gestão do Cuidado", "inicio": "28/09/2026", "status": "andamento", "reuniao": "Não" },
     { "semana": 11, "politica": "Contábil e Financeira", "inicio": "", "status": "nao", "reuniao": "Não" },
     { "semana": 12, "politica": "Accountability", "inicio": "", "status": "nao", "reuniao": "Não" },
