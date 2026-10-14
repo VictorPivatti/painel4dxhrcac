@@ -463,3 +463,71 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .card-evolucao { display: flex; align-items: center; }
 .card-evolucao > .card-head-icon { width: 100%; }
 .capy-item { width: 1.6rem; }
+
+/* ==========================================================================
+   v9 · Cabeçalho fixo do placar + animações
+   ========================================================================== */
+
+/* Cabeçalho fixo. A caixa com rolagem horizontal "prendia" o cabeçalho dentro
+   dela; onde a tabela (960px) cabe inteira, a rolagem sai e o cabeçalho passa
+   a acompanhar a página. Abaixo disso a rolagem lateral continua necessária. */
+@media (min-width: 1080px) {
+  .placar-table-wrap { overflow: visible; }
+}
+.placar-cols-head {
+  z-index: 3; border-radius: 0 0 .6rem .6rem;
+  transition: box-shadow .2s ease;
+}
+.placar-cols-head.colado { box-shadow: 0 10px 14px -12px rgba(0,34,10,.45); }
+
+/* E · mini barra da % Adesão (escala real 0 a 100%) */
+.adesao-cel { display: inline-flex; flex-direction: column; gap: .3rem; min-width: 4.5rem; }
+.adesao-trilho { display: block; width: 100%; align-self: stretch; height: .4rem; border-radius: 999px; background: var(--track); overflow: hidden; }
+.adesao-trilho i {
+  display: block; height: 100%; border-radius: inherit;
+  width: calc(var(--pct) * 1%);
+  transition: width 1s cubic-bezier(.2,.8,.2,1);
+  transition-delay: calc(var(--i, 0) * 45ms + 250ms);
+}
+.adesao-baixa-barra { background: var(--danger); }
+.adesao-ok-barra { background: var(--jungle); }
+@media (max-width: 640px) { .adesao-cel { align-items: flex-end; } }
+
+/* B · círculos dos meses */
+.anim-play .mes-arco { transition: stroke-dasharray 1.3s cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--i) * 140ms); }
+
+/* C · barras de reunião crescendo a partir da linha central */
+.barra-reuniao { transform-box: fill-box; }
+.barra-sim { transform-origin: 50% 100%; }
+.barra-nao { transform-origin: 50% 0%; }
+.anim-pronto:not(.anim-play) .barra-reuniao { transform: scaleY(0); }
+.anim-play .barra-reuniao {
+  animation: barra-cresce .65s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes barra-cresce { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* F · halo na reunião pendente: lento e discreto, só depois das barras */
+.halo-pendente {
+  pointer-events: none; transform-box: fill-box; transform-origin: 50% 50%;
+  opacity: 0; animation: halo-pendente 2.6s ease-out 1.4s infinite;
+}
+.anim-pronto:not(.anim-play) .halo-pendente { animation: none; }
+@keyframes halo-pendente {
+  0%   { transform: scale(1);        opacity: .75; }
+  100% { transform: scale(1.9, 1.3); opacity: 0; }
+}
+
+/* D · linhas do placar em cascata */
+.placar-body.anim-pronto:not(.anim-play) > * { opacity: 0; transform: translateY(10px); }
+.anim-pronto:not(.anim-play) .adesao-trilho i { width: 0; }
+.placar-body.anim-play > * {
+  animation: linha-entra .5s ease-out both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes linha-entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .halo-pendente { display: none; }
+  .barra-reuniao, .placar-body > *, .mes-arco, .adesao-trilho i { animation: none !important; transition: none !important; }
+}

@@ -249,7 +249,8 @@ function render(model) {
         <svg viewBox="0 0 80 80">
           <circle cx="40" cy="40" r="32" stroke="var(--track)" stroke-width="6" fill="none"/>
           <circle cx="40" cy="40" r="32" stroke="url(#trimGrad)" stroke-width="6" fill="none"
-            stroke-linecap="round" stroke-dasharray="${dash} ${circunf}" transform="rotate(-90 40 40)"/>
+            stroke-linecap="round" stroke-dasharray="${dash} ${circunf}" transform="rotate(-90 40 40)"
+            class="mes-arco" data-dash="${dash}" data-circ="${circunf}" style="--i:${i}"/>
         </svg>
         <div class="mes-valor${futuro ? " mes-futuro" : ""}">${futuro ? "—" : fmtPct(valor) + "<span>%</span>"}</div>
       </div>
@@ -416,7 +417,9 @@ function renderReuniao(model) {
     const d = realizada
       ? `M${x},${yZero} L${x},${yTopo + r} Q${x},${yTopo} ${x + r},${yTopo} L${x + larguraBarra - r},${yTopo} Q${x + larguraBarra},${yTopo} ${x + larguraBarra},${yTopo + r} L${x + larguraBarra},${yZero} Z`
       : `M${x},${yZero} L${x},${yZero + altBarra - r} Q${x},${yZero + altBarra} ${x + r},${yZero + altBarra} L${x + larguraBarra - r},${yZero + altBarra} Q${x + larguraBarra},${yZero + altBarra} ${x + larguraBarra},${yZero + altBarra - r} L${x + larguraBarra},${yZero} Z`;
-    barras += `<path d="${d}" fill="${cor}"/>`;
+    // Halo atrás da barra pendente (animação F): chama o olho para a ação que falta
+    if (!realizada) barras += `<path d="${d}" fill="none" stroke="${cor}" stroke-width="2" class="halo-pendente"/>`;
+    barras += `<path d="${d}" fill="${cor}" class="barra-reuniao ${realizada ? "barra-sim" : "barra-nao"}" style="--i:${i}"/>`;
 
     rotulos += `<text x="${cx}" y="${H - 14}" class="rot-eixo" text-anchor="middle">${String(item.linha.semana).padStart(2, "0")}</text>`;
 
@@ -502,7 +505,9 @@ function atrasoBadge(ad) {
 function adesaoBadge(pct) {
   if (pct === undefined || pct === null) return `<span class="atraso-na">—</span>`;
   const cls = pct < 20 ? "adesao-baixa" : "adesao-ok";
-  return `<span class="${cls}">${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</span>`;
+  // Mini barra em escala real de 0 a 100% (100% = todos os colaboradores treinados)
+  return `<span class="adesao-cel"><span class="${cls}">${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</span>` +
+    `<span class="adesao-trilho" aria-hidden="true"><i class="${cls}-barra" style="--pct:${Math.min(100, pct)}"></i></span></span>`;
 }
 
 function marcoRow(semana, comRelatorio) {
@@ -516,11 +521,127 @@ function marcoRow(semana, comRelatorio) {
   return div;
 }
 
+/* ==========================================================================
+   v9 · Animações que mostram o dado chegando
+   Cada seção anima uma única vez, quando entra na tela. Quem pediu ao sistema
+   para reduzir movimento (ou navegador sem IntersectionObserver) vê direto os
+   valores finais. Sem JavaScript, nada fica escondido: os estados "antes"
+   só existem enquanto a classe .anim-pronto estiver aplicada.
+   ========================================================================== */
+const REDUZ_MOVIMENTO = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+function aoAparecer(el, preparar, tocar) {
+  if (!el) return;
+  if (REDUZ_MOVIMENTO || !("IntersectionObserver" in window)) return;
+  el.classList.add("anim-pronto");
+  if (preparar) preparar();
+  const io = new IntersectionObserver((entradas) => {
+    if (!entradas.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    el.classList.add("anim-play");
+    void el.getBoundingClientRect(); // garante que o estado inicial foi pintado antes da transição
+    if (tocar) requestAnimationFrame(() => tocar());
+  }, { threshold: 0.1 });
+  io.observe(el);
+}
+
+// A · Números contando de zero até o valor. Mexe só nos nós de texto, então
+// spans internos (como o "%" menor do card Atual) ficam intactos.
+const RE_NUMERO = /\d+(?:,\d+)?/g;
+function prepararContagem(els) {
+  const nos = [];
+  for (const el of els) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (/\d/.test(n.nodeValue)) nos.push({ n, final: n.nodeValue });
+    }
+  }
+  const escrever = (fator) => {
+    for (const { n, final } of nos) {
+      n.nodeValue = final.replace(RE_NUMERO, (m) => {
+        const casas = (m.split(",")[1] || "").length;
+        const v = parseFloat(m.replace(",", ".")) * fator;
+        return casas ? v.toFixed(casas).replace(".", ",") : String(Math.round(v));
+      });
+    }
+  };
+  escrever(0);
+  return (duracao = 1200) => {
+    const t0 = performance.now();
+    const passo = (t) => {
+      const p = Math.min(1, (t - t0) / duracao);
+      escrever(1 - Math.pow(1 - p, 3)); // desacelera no fim
+      if (p < 1) requestAnimationFrame(passo);
+      else for (const { n, final } of nos) n.nodeValue = final; // texto exato no final
+    };
+    requestAnimationFrame(passo);
+  };
+}
+
+function animarPainel() {
+  // A · card Atual
+  const cardAtual = document.querySelector(".card-atual");
+  let contarAtual;
+  aoAparecer(cardAtual,
+    () => { contarAtual = prepararContagem([document.getElementById("atual-valor")]); },
+    () => contarAtual(1400));
+
+  // A · oito cartões de indicadores
+  const grade = document.querySelector(".cards-grid");
+  let contarCards;
+  aoAparecer(grade,
+    () => { contarCards = prepararContagem(grade.querySelectorAll(".mini-valor")); },
+    () => contarCards(1100));
+
+  // B · círculos dos meses se desenhando, com contagem no centro
+  const meses = document.getElementById("meses-grid");
+  let contarMeses;
+  aoAparecer(meses,
+    () => {
+      meses.querySelectorAll(".mes-arco").forEach((c) => c.setAttribute("stroke-dasharray", `0 ${c.dataset.circ}`));
+      contarMeses = prepararContagem(meses.querySelectorAll(".mes-valor"));
+    },
+    () => {
+      meses.querySelectorAll(".mes-arco").forEach((c) => c.setAttribute("stroke-dasharray", `${c.dataset.dash} ${c.dataset.circ}`));
+      contarMeses(1300);
+    });
+
+  // C + F · barras de reunião crescendo e halo da pendente (tudo em CSS)
+  aoAparecer(document.querySelector("#secao-reuniao .ritmo-svg"));
+
+  // D + E · linhas do placar em cascata e mini barras de adesão (CSS)
+  const placar = document.getElementById("placar-body");
+  if (placar) [...placar.children].forEach((linha, i) => linha.style.setProperty("--i", i));
+  aoAparecer(placar);
+}
+
+// Cabeçalho do placar: sombra só enquanto estiver "colado" no topo da tela
+function vigiarCabecalho() {
+  const cab = document.querySelector(".placar-cols-head");
+  const corpo = document.getElementById("placar-body");
+  if (!cab || !corpo) return;
+  let agendado = false;
+  const atualizar = () => {
+    agendado = false;
+    const topo = cab.getBoundingClientRect().top;
+    const fimCorpo = corpo.getBoundingClientRect().bottom;
+    cab.classList.toggle("colado", Math.abs(topo) < 1 && window.scrollY > 0 && fimCorpo > cab.offsetHeight);
+  };
+  window.addEventListener("scroll", () => {
+    if (!agendado) { agendado = true; requestAnimationFrame(atualizar); }
+  }, { passive: true });
+  atualizar();
+}
+
 async function main() {
   try {
     const data = await loadData();
     modeloAtual = buildModel(data);
     render(modeloAtual);
+    // Animações são enfeite: se falharem, o painel continua com os valores finais
+    try { animarPainel(); } catch (e) { console.warn("Animações desativadas:", e); }
+    vigiarCabecalho();
   } catch (err) {
     console.error(err);
     document.body.innerHTML =
