@@ -486,15 +486,15 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .adesao-trilho i {
   display: block; height: 100%; border-radius: inherit;
   width: calc(var(--pct) * 1%);
-  transition: width 1s cubic-bezier(.2,.8,.2,1);
-  transition-delay: calc(var(--i, 0) * 45ms + 250ms);
+  transition: width 1.8s cubic-bezier(.65,0,.35,1);
+  transition-delay: calc(var(--i, 0) * 90ms + 500ms);
 }
 .adesao-baixa-barra { background: var(--danger); }
 .adesao-ok-barra { background: var(--jungle); }
 @media (max-width: 640px) { .adesao-cel { align-items: flex-end; } }
 
 /* B · círculos dos meses */
-.anim-play .mes-arco { transition: stroke-dasharray 1.3s cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--i) * 140ms); }
+.anim-play .mes-arco { transition: stroke-dasharray 2.2s cubic-bezier(.65,0,.35,1); transition-delay: calc(var(--i) * 250ms); }
 
 /* C · barras de reunião crescendo a partir da linha central */
 .barra-reuniao { transform-box: fill-box; }
@@ -502,15 +502,15 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .barra-nao { transform-origin: 50% 0%; }
 .anim-pronto:not(.anim-play) .barra-reuniao { transform: scaleY(0); }
 .anim-play .barra-reuniao {
-  animation: barra-cresce .65s cubic-bezier(.2,.8,.2,1) both;
-  animation-delay: calc(var(--i) * 70ms);
+  animation: barra-cresce 1.2s cubic-bezier(.65,0,.35,1) both;
+  animation-delay: calc(var(--i) * 120ms);
 }
 @keyframes barra-cresce { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 /* F · halo na reunião pendente: lento e discreto, só depois das barras */
 .halo-pendente {
   pointer-events: none; transform-box: fill-box; transform-origin: 50% 50%;
-  opacity: 0; animation: halo-pendente 2.6s ease-out 1.4s infinite;
+  opacity: 0; animation: halo-pendente 3.4s ease-out 2.8s infinite;
 }
 .anim-pronto:not(.anim-play) .halo-pendente { animation: none; }
 @keyframes halo-pendente {
@@ -522,12 +522,18 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .placar-body.anim-pronto:not(.anim-play) > * { opacity: 0; transform: translateY(10px); }
 .anim-pronto:not(.anim-play) .adesao-trilho i { width: 0; }
 .placar-body.anim-play > * {
-  animation: linha-entra .5s ease-out both;
-  animation-delay: calc(var(--i) * 45ms);
+  animation: linha-entra 1s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: calc(var(--i) * 90ms);
 }
-@keyframes linha-entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes linha-entra { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .halo-pendente { display: none; }
   .barra-reuniao, .placar-body > *, .mes-arco, .adesao-trilho i { animation: none !important; transition: none !important; }
 }
+
+/* v10 · bloco único de marcos no fim do placar */
+.marcos-bloco { display: grid; gap: .55rem; }
+.marcos-cabeca { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8a6400; }
+.marcos-cabeca span { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted-foreground); }
+.marco-item { padding-left: .75rem; border-left: 3px solid rgba(230,173,0,.55); }

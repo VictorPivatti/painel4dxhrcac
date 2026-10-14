@@ -346,8 +346,6 @@ function render(model) {
   // Placar semanal
   const placarEl = document.getElementById("placar-body");
   placarEl.innerHTML = "";
-  const semana0 = model.semanaByNumero.get(0);
-  if (semana0) placarEl.appendChild(marcoRow(semana0));
 
   for (const linha of model.linhasOrdenadas) {
     const semanaInfo = model.semanaByNumero.get(linha.semana);
@@ -368,8 +366,10 @@ function render(model) {
     placarEl.appendChild(row);
   }
 
-  const semanaFinal = model.semanaByNumero.get(18);
-  if (semanaFinal) placarEl.appendChild(marcoRow(semanaFinal, true));
+  // Marcos (abertura e encerramento) juntos no fim: o placar começa direto nas
+  // políticas, e o bloco deixa claro que essas duas linhas não são disseminações.
+  const marcos = [model.semanaByNumero.get(0), model.semanaByNumero.get(18)].filter(Boolean);
+  if (marcos.length) placarEl.appendChild(marcosBloco(marcos));
 }
 
 /* Gráfico de reuniões: uma barra por política já iniciada, em ordem de semana.
@@ -510,13 +510,17 @@ function adesaoBadge(pct) {
     `<span class="adesao-trilho" aria-hidden="true"><i class="${cls}-barra" style="--pct:${Math.min(100, pct)}"></i></span></span>`;
 }
 
-function marcoRow(semana, comRelatorio) {
+function marcosBloco(semanas) {
   const div = document.createElement("div");
-  div.className = "placar-marco";
+  div.className = "placar-marco marcos-bloco";
   div.innerHTML = `
-    <div class="marco-titulo">${semana.rotulo}</div>
-    <div class="marco-sub">${semana.inicio} · marco do projeto (não contabilizado nas disseminações)</div>
-    ${comRelatorio && semana.notaMarco ? `<div class="marco-relatorio">${semana.notaMarco}</div>` : ""}
+    <div class="marcos-cabeca">📌 Marcos do projeto <span>· não contabilizados nas disseminações</span></div>
+    ${semanas.map((s) => `
+      <div class="marco-item">
+        <div class="marco-titulo">${s.rotulo}</div>
+        <div class="marco-sub">${s.inicio}${s.descricao ? ` · ${s.descricao}` : ""}</div>
+        ${s.notaMarco ? `<div class="marco-relatorio">${s.notaMarco}</div>` : ""}
+      </div>`).join("")}
   `;
   return div;
 }
@@ -567,11 +571,11 @@ function prepararContagem(els) {
     }
   };
   escrever(0);
-  return (duracao = 1200) => {
+  return (duracao = 2000) => {
     const t0 = performance.now();
     const passo = (t) => {
       const p = Math.min(1, (t - t0) / duracao);
-      escrever(1 - Math.pow(1 - p, 3)); // desacelera no fim
+      escrever(p < 0.5 ? 8 * p ** 4 : 1 - Math.pow(-2 * p + 2, 4) / 2); // começa e termina suave
       if (p < 1) requestAnimationFrame(passo);
       else for (const { n, final } of nos) n.nodeValue = final; // texto exato no final
     };
@@ -585,14 +589,14 @@ function animarPainel() {
   let contarAtual;
   aoAparecer(cardAtual,
     () => { contarAtual = prepararContagem([document.getElementById("atual-valor")]); },
-    () => contarAtual(1400));
+    () => contarAtual(2400));
 
   // A · oito cartões de indicadores
   const grade = document.querySelector(".cards-grid");
   let contarCards;
   aoAparecer(grade,
     () => { contarCards = prepararContagem(grade.querySelectorAll(".mini-valor")); },
-    () => contarCards(1100));
+    () => contarCards(2000));
 
   // B · círculos dos meses se desenhando, com contagem no centro
   const meses = document.getElementById("meses-grid");
@@ -604,7 +608,7 @@ function animarPainel() {
     },
     () => {
       meses.querySelectorAll(".mes-arco").forEach((c) => c.setAttribute("stroke-dasharray", `${c.dataset.dash} ${c.dataset.circ}`));
-      contarMeses(1300);
+      contarMeses(2200);
     });
 
   // C + F · barras de reunião crescendo e halo da pendente (tudo em CSS)
