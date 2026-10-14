@@ -715,7 +715,7 @@ function renderRanking(model) {
     const cls = x.pct >= info.meta ? "adesao-ok" : x.pct >= info.alerta ? "adesao-media" : "adesao-baixa";
     return `<li class="rk" style="--i:${i}">
       <span class="rk-pos">${medalhas[i] || `${i + 1}º`}</span>
-      <div class="rk-nome"><strong>${x.politica}</strong><span>${model.politicaSetor.get(x.politica) || ""}</span></div>
+      <div class="rk-nome" title="${x.politica} · ${model.politicaSetor.get(x.politica) || ""}"><strong>${x.politica}</strong><span>${model.politicaSetor.get(x.politica) || ""}</span></div>
       <div class="rk-trilho" style="--meta:${info.meta};--media:${media}"><i class="${cls}-barra" style="--pct:${Math.min(100, x.pct)}"></i></div>
       <span class="rk-valor ${cls}">${fmt(x.pct)}%</span>
     </li>`;

@@ -760,3 +760,38 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 #secao-reuniao .ritmo-sub { margin-top: .2rem; font-size: .78rem; }
 #secao-reuniao .ritmo-svg { margin-top: .35rem; }
 #secao-reuniao .ritmo-leitura { margin-top: .4rem; font-size: .8rem; }
+
+/* v18 · ranking de adesão compacto, no fim do painel */
+#secao-ranking { padding: 1.15rem 1.35rem; }
+#secao-ranking h2 { font-size: 1.2rem; }
+#secao-ranking .ritmo-head { margin-bottom: 0; }
+#secao-ranking .ritmo-sub { margin-top: .2rem; font-size: .78rem; }
+#secao-ranking .rk-escala { margin-top: .5rem; height: 1rem; }
+#secao-ranking .ranking-lista { gap: 0; margin-top: .15rem; }
+#secao-ranking .rk { padding: .28rem 0; gap: .75rem; grid-template-columns: 2rem minmax(9rem, 15rem) minmax(0, 1fr) 3.2rem; }
+#secao-ranking .rk-escala { gap: .75rem; grid-template-columns: 2rem minmax(9rem, 15rem) minmax(0, 1fr) 3.2rem; }
+#secao-ranking .rk-pos { font-size: .95rem; }
+#secao-ranking .rk-nome { flex-direction: row; align-items: baseline; gap: .45rem; flex-wrap: wrap; }
+#secao-ranking .rk-nome strong { font-size: .84rem; }
+#secao-ranking .rk-nome span { font-size: .7rem; }
+#secao-ranking .rk-trilho { height: .55rem; }
+#secao-ranking .rk-valor { font-size: .85rem !important; }
+#secao-ranking .ritmo-nota { margin-top: .35rem; }
+@media (max-width: 640px) {
+  #secao-ranking .rk, #secao-ranking .rk-escala { grid-template-columns: 1.8rem minmax(0, 1fr) 3rem; row-gap: .25rem; }
+}
+#secao-ranking .rk, #secao-ranking .rk-escala { grid-template-columns: 2rem minmax(12rem, 22rem) minmax(0, 1fr) 3.2rem; }
+#secao-ranking .rk { padding: .22rem 0; }
+#secao-ranking .rk-nome { flex-wrap: nowrap; overflow: hidden; }
+#secao-ranking .rk-nome strong { white-space: nowrap; flex-shrink: 0; }
+#secao-ranking .rk-nome span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 640px) {
+  #secao-ranking .rk, #secao-ranking .rk-escala { grid-template-columns: 1.8rem minmax(0, 1fr) 3rem; }
+  #secao-ranking .rk-nome strong { flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; }
+}
+#secao-ranking .rk { padding: .48rem 0; }
+#secao-ranking .rk-escala-eixo span:last-child { display: none; }
+@media (max-width: 640px) {
+  #secao-ranking .rk-nome span { display: none; }
+  #secao-ranking .rk-nome strong { white-space: normal; }
+}
