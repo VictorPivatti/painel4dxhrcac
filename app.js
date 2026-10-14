@@ -342,6 +342,8 @@ function render(model) {
   }
 
   renderReuniao(model);
+  renderVeredito(model);
+  renderFesta(model);
 
   // Placar semanal
   const placarEl = document.getElementById("placar-body");
@@ -525,6 +527,81 @@ function marcosBloco(semanas) {
   return div;
 }
 
+/* Veredito "Estamos ganhando?": responde em 5 segundos se a meta vem.
+   Projeção linear: supõe que o ritmo médio desde o início da disseminação
+   continua até o prazo. O texto diz "no ritmo atual" para não soar como certeza. */
+function fmtNum1(n) { return n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+
+function calcularVeredito(model) {
+  const { projeto, disseminadas, totalPoliticas } = model;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const prazo = parseDateBR(projeto.prazo);
+  const inicio = parseDateBR(projeto.disseminacao);
+  const metaQtd = Math.ceil((projeto.metaFinal / 100) * totalPoliticas - 1e-9);
+  const faltam = Math.max(0, metaQtd - disseminadas);
+  const dias = Math.max(0, Math.ceil((prazo - hoje) / MS_DIA));
+  const semanasPassadas = Math.max(1, (hoje - inicio) / (7 * MS_DIA));
+  const semanasRestantes = dias / 7;
+  const ritmoAtual = disseminadas / semanasPassadas;
+  const ritmoNecessario = faltam ? faltam / Math.max(semanasRestantes, 1 / 7) : 0;
+  const naoConcluidas = totalPoliticas - disseminadas;
+  const projecao = disseminadas + ritmoAtual * semanasRestantes;
+
+  let tom, frase;
+  if (!faltam) {
+    tom = "success"; frase = `Meta atingida! ${disseminadas} de ${totalPoliticas} políticas disseminadas.`;
+  } else if (naoConcluidas < faltam || !dias) {
+    tom = "danger"; frase = "Meta em risco: não restam políticas ou dias suficientes para chegar aos 80%.";
+  } else if (projecao >= metaQtd) {
+    tom = "success"; frase = `No ritmo atual, chegamos aos ${projeto.metaFinal}% antes de ${projeto.prazo}.`;
+  } else if (ritmoNecessario <= ritmoAtual * 1.5) {
+    tom = "warning"; frase = "Precisamos acelerar um pouco para chegar à meta no prazo.";
+  } else {
+    tom = "danger"; frase = "Meta em risco: o ritmo necessário está bem acima do atual.";
+  }
+  return { metaQtd, faltam, dias, ritmoAtual, ritmoNecessario, tom, frase };
+}
+
+function renderVeredito(model) {
+  const sec = document.getElementById("veredito");
+  if (!sec) return;
+  const v = calcularVeredito(model);
+  sec.hidden = false;
+  sec.className = `card veredito tom-${v.tom}`;
+  document.getElementById("veredito-frase").textContent = v.frase;
+  document.getElementById("vn-faltam").textContent = v.faltam;
+  document.getElementById("vn-faltam-rot").textContent =
+    v.faltam === 1 ? `política para os ${model.projeto.metaFinal}% (meta: ${v.metaQtd})` : `políticas para os ${model.projeto.metaFinal}% (meta: ${v.metaQtd})`;
+  document.getElementById("vn-dias").textContent = v.dias;
+  document.getElementById("vn-dias-rot").textContent = `dias até ${model.projeto.prazo}`;
+  document.getElementById("vn-ritmo").textContent = fmtNum1(v.ritmoNecessario);
+  document.getElementById("vn-ritmo-rot").textContent = `por semana necessárias · ritmo atual ${fmtNum1(v.ritmoAtual)}`;
+}
+
+/* Comemoração: políticas liberadas no Humand nos últimos 7 dias (inclusive).
+   Sem nenhuma, o cartão some. Com a meta batida, o título muda. */
+function renderFesta(model) {
+  const sec = document.getElementById("festa");
+  if (!sec) return;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const recentes = model.linhasOrdenadas.filter((l) => {
+    if (l.status !== "concluido") return false;
+    const d = parseDateBR(l.inicio);
+    if (Number.isNaN(d.getTime())) return false;
+    const dias = (hoje - d) / MS_DIA;
+    return dias >= 0 && dias <= 7;
+  });
+  const metaBatida = model.mci >= model.projeto.metaFinal;
+  if (!recentes.length && !metaBatida) { sec.hidden = true; return; }
+  sec.hidden = false;
+  sec.classList.toggle("festa-meta", metaBatida);
+  document.getElementById("festa-titulo").textContent = metaBatida
+    ? `🏆 Meta de ${model.projeto.metaFinal}% atingida!`
+    : `🎉 ${recentes.length === 1 ? "Concluída" : "Concluídas"} nos últimos 7 dias`;
+  document.getElementById("festa-lista").innerHTML = recentes
+    .map((l) => `<li><strong>${l.politica}</strong><span>liberada em ${l.inicio}</span></li>`).join("");
+}
+
 /* ==========================================================================
    v9 · Animações que mostram o dado chegando
    Cada seção anima uma única vez, quando entra na tela. Quem pediu ao sistema
@@ -590,6 +667,17 @@ function animarPainel() {
   aoAparecer(cardAtual,
     () => { contarAtual = prepararContagem([document.getElementById("atual-valor")]); },
     () => contarAtual(2400));
+
+  // A · números do veredito
+  const veredito = document.getElementById("veredito");
+  let contarVeredito;
+  if (veredito && !veredito.hidden) aoAparecer(veredito,
+    () => { contarVeredito = prepararContagem(veredito.querySelectorAll(".vn-valor")); },
+    () => contarVeredito(2000));
+
+  // Comemoração: peixinhos pulam quando o cartão aparece (CSS)
+  const festa = document.getElementById("festa");
+  if (festa && !festa.hidden) aoAparecer(festa);
 
   // A · oito cartões de indicadores
   const grade = document.querySelector(".cards-grid");

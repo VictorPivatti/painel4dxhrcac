@@ -537,3 +537,74 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .marcos-cabeca { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8a6400; }
 .marcos-cabeca span { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted-foreground); }
 .marco-item { padding-left: .75rem; border-left: 3px solid rgba(230,173,0,.55); }
+
+/* ==========================================================================
+   v11 · Lote 1: veredito, comemoração e ícones
+   ========================================================================== */
+.topo-placar { display: grid; gap: 1.75rem; grid-template-columns: 1fr; }
+.topo-placar [hidden] { display: none !important; }
+@media (min-width: 900px) {
+  .topo-placar:has(.festa:not([hidden])) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+}
+
+/* Veredito */
+.veredito { display: flex; flex-direction: column; gap: 1.1rem; border-left: 6px solid var(--muted-foreground); }
+.veredito.tom-success { border-left-color: var(--success); background: linear-gradient(90deg, rgba(35,161,54,.09), var(--card) 60%); }
+.veredito.tom-warning { border-left-color: var(--warning); background: linear-gradient(90deg, rgba(238,169,0,.13), var(--card) 60%); }
+.veredito.tom-danger  { border-left-color: var(--danger);  background: linear-gradient(90deg, rgba(230,45,40,.09), var(--card) 60%); }
+.veredito-frase {
+  margin: .4rem 0 0; display: flex; align-items: baseline; gap: .55rem;
+  font-family: 'Playfair Display', Georgia, serif; font-weight: 700;
+  font-size: clamp(1.15rem, 2.1vw, 1.65rem); line-height: 1.25; color: var(--jungle-deep);
+}
+.veredito-frase::before { content: ""; flex-shrink: 0; width: .7rem; height: .7rem; border-radius: 50%; background: currentColor; transform: translateY(-.1rem); }
+.tom-success .veredito-frase::before { background: var(--success); }
+.tom-warning .veredito-frase::before { background: var(--warning); }
+.tom-danger  .veredito-frase::before { background: var(--danger); }
+.veredito-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; }
+.vn { padding: .85rem 1rem; border-radius: .85rem; background: rgba(248,234,206,.45); border: 1px solid var(--border); }
+.vn-valor {
+  font-family: 'Playfair Display', Georgia, serif; font-weight: 800; line-height: 1;
+  font-size: clamp(2rem, 3.6vw, 2.9rem); color: var(--jungle); font-variant-numeric: tabular-nums lining-nums;
+}
+.vn-rot { margin-top: .4rem; font-size: .8rem; line-height: 1.35; color: var(--muted-foreground); }
+@media (max-width: 520px) { .veredito-nums { grid-template-columns: 1fr; } }
+
+/* Comemoração */
+.festa {
+  display: flex; flex-direction: column; position: relative; overflow: hidden;
+  padding: 1.5rem 1.5rem 0;
+  background: linear-gradient(180deg, #fffaf0 0%, #fff1cf 100%); border-color: rgba(230,173,0,.45);
+}
+.festa-eyebrow { color: #8a6400; }
+.festa-lista { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .6rem; }
+.festa-lista li { display: flex; flex-direction: column; gap: .1rem; }
+.festa-lista strong { font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; line-height: 1.25; color: var(--jungle-deep); }
+.festa-lista span { font-size: .8rem; color: var(--muted-foreground); }
+.festa-rio { display: block; width: calc(100% + 3rem); margin: auto -1.5rem 0; height: auto; min-height: 4.5rem; overflow: visible; }
+.festa-agua { fill: #7fb8c9; opacity: .4; animation: festa-onda 5s ease-in-out infinite alternate; }
+.festa-agua2 { fill: #006078; opacity: .22; animation-duration: 6.5s; animation-direction: alternate-reverse; }
+@keyframes festa-onda { from { transform: translateY(0); } to { transform: translateY(2.5px); } }
+.peixe { fill: var(--gold); stroke: #a87700; stroke-width: .8; opacity: 0; transform: translate(var(--x), 60px); }
+.peixe-olho { fill: #3a2a00; stroke: none; }
+.festa.anim-play .peixe { animation: peixe-pula 2.2s cubic-bezier(.45,.05,.55,.95) var(--d) 3 both; }
+.festa-meta.anim-play .peixe { animation-iteration-count: infinite; }
+@keyframes peixe-pula {
+  0%   { transform: translate(var(--x), 62px) rotate(-55deg); opacity: 0; }
+  12%  { opacity: 1; }
+  50%  { transform: translate(calc(var(--x) + 20px), 14px) rotate(0deg); }
+  88%  { opacity: 1; }
+  100% { transform: translate(calc(var(--x) + 40px), 62px) rotate(55deg); opacity: 0; }
+}
+
+/* Ícones dos cartões */
+.mini-label { display: flex; align-items: center; gap: .4rem; }
+.mini-ico {
+  width: 1.1rem; height: 1.1rem; flex-shrink: 0; fill: none; stroke: var(--jungle);
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .85;
+}
+.mini-ico .ico-cheio { fill: var(--jungle); stroke: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .festa-agua, .peixe { animation: none !important; }
+}
