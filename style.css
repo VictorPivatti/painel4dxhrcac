@@ -738,3 +738,17 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .festa-lista span { font-size: .74rem; }
 .festa-rio { width: calc(100% + 2.3rem); margin: auto -1.15rem 0; min-height: 3rem; }
 @media (max-width: 720px) { .veredito { padding: 1rem 1.1rem; } }
+
+/* v16 · linha do tempo unificada no card "Evolução da Conformidade" */
+.capy-rio { margin-top: 1.1rem; }
+.capy-rio-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .3rem .9rem; }
+.rio-chave { display: flex; flex-wrap: wrap; gap: .3rem .75rem; font-size: .7rem; color: var(--muted-foreground); }
+.rio-chave span { display: inline-flex; align-items: center; gap: .3rem; }
+.capy-rio .rio-scroll { margin-top: .35rem; }
+.capy-rio .rio-svg > svg { min-width: 480px; }
+.capy-rio .capy-count { display: block; margin: .3rem 0 0; }
+.rio-sem { font-size: 10.5px; }
+.capy-rio .rio-marco-ico { font-size: 14px; }
+/* Itens de grid/flex não encolhem abaixo do conteúdo por padrão: libera para o rio rolar */
+.grid-top > *, .card-evolucao > *, .card-evolucao .flex1, .capy-rio, .capy-rio .rio-scroll { min-width: 0; }
+.card-head-icon > .flex1 { align-self: stretch; width: 100%; }

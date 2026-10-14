@@ -265,26 +265,9 @@ function render(model) {
   document.getElementById("barra-meta-marker").style.left = `${projeto.metaFinal}%`;
   document.getElementById("barra-meta-label").textContent = `Meta ${projeto.metaFinal}%`;
 
-  const capyRow = document.getElementById("capy-row");
-  capyRow.innerHTML = "";
-  for (let i = 0; i < model.totalPoliticas; i++) {
-    const estado =
-      i < model.disseminadas ? "concluida"
-      : i < model.disseminadas + model.execucao ? "andamento"
-      : "pendente";
-    const rotulo =
-      estado === "concluida" ? "Política disseminada"
-      : estado === "andamento" ? "Em andamento, aguardando liberação"
-      : "Ainda não iniciada";
-    const item = document.createElement("span");
-    item.className = "capy-item";
-    item.title = rotulo;
-    item.style.animationDelay = `${i * 130}ms`; // onda percorrendo a fileira
-    item.innerHTML = iconeCapivara(estado);
-    capyRow.appendChild(item);
-  }
   const pendentes = model.totalPoliticas - model.disseminadas - model.execucao;
   document.getElementById("capy-count").textContent =
+    (model.semanaAtual && !model.semanaAtual.marco ? `Semana ${String(model.semanaAtual.numero).padStart(2, "0")} · ` : "") +
     `${model.disseminadas} disseminadas · ${model.execucao} em andamento · ${pendentes} a iniciar`;
 
   document.getElementById("atual-valor").innerHTML = fmtPct(model.mci) + "<span>%</span>";
@@ -623,30 +606,33 @@ function renderRio(model) {
   if (!s0 || !s18) { sec.hidden = true; return; }
   sec.hidden = false;
 
-  const W = 1000, H = 196, padE = 34, padD = 34;
+  // Desenha na largura real do card (1 unidade = 1px): textos ficam no tamanho
+  // normal. Abaixo de 480px o rio rola para os lados em vez de encolher.
+  const caixa = sec.querySelector(".rio-scroll");
+  const W = Math.max(480, Math.round(caixa.clientWidth || 720)), H = 150, padE = 22, padD = 22;
   const t0 = parseDateBR(s0.inicio).getTime(), t1 = parseDateBR(s18.inicio).getTime();
   const xDe = (t) => padE + ((t - t0) / (t1 - t0)) * (W - padE - padD);
-  const rioTopo = 112, rioBase = 140;
+  const rioTopo = 86, rioBase = 108;
 
   // Rio com margens onduladas
   const onda = (y, amp, fase) => {
     let d = "";
-    for (let x = 0; x <= W; x += 20) d += `${x ? "L" : "M"}${x},${(y + Math.sin(x / 55 + fase) * amp).toFixed(1)} `;
+    for (let x = 0; x <= W; x += 16) d += `${x ? "L" : "M"}${x},${(y + Math.sin(x / 40 + fase) * amp).toFixed(1)} `;
     return d;
   };
   const margemSup = onda(rioTopo, 3, 0);
   let margemInf = "";
-  for (let x = W; x >= 0; x -= 20) margemInf += `L${x},${(rioBase + Math.sin(x / 48 + 1.3) * 2.5).toFixed(1)} `;
+  for (let x = W; x >= 0; x -= 16) margemInf += `L${x},${(rioBase + Math.sin(x / 36 + 1.3) * 2).toFixed(1)} `;
   const rio = `<path d="${margemSup}${margemInf}Z" class="rio-agua"/>
-    <path d="${onda(rioTopo + 10, 2, 1)}" class="rio-corrente"/>
-    <path d="${onda(rioTopo + 19, 2, 2.4)}" class="rio-corrente rio-corrente2"/>`;
+    <path d="${onda(rioTopo + 8, 1.6, 1)}" class="rio-corrente"/>
+    <path d="${onda(rioTopo + 15, 1.6, 2.4)}" class="rio-corrente rio-corrente2"/>`;
 
   // Rótulos das semanas
   let semanas = "";
   for (const [num, sem] of model.semanaByNumero) {
     if (sem.marco) continue;
     const meio = parseDateBR(sem.inicio).getTime() + 2 * MS_DIA;
-    semanas += `<text x="${xDe(meio).toFixed(1)}" y="${rioBase + 22}" class="rot-eixo" text-anchor="middle">${String(num).padStart(2, "0")}</text>`;
+    semanas += `<text x="${xDe(meio).toFixed(1)}" y="${rioBase + 17}" class="rot-eixo rio-sem" text-anchor="middle">${String(num).padStart(2, "0")}</text>`;
   }
 
   // Capivaras (empilhadas quando a semana tem duas políticas)
@@ -656,7 +642,8 @@ function renderRio(model) {
     porSemana.get(l.semana).push(l);
   }
   let capys = "", ordem = 0;
-  const larg = 40, alt = 31;
+  const semanaPx = (7 * MS_DIA / (t1 - t0)) * (W - padE - padD);
+  const larg = Math.min(34, semanaPx * 0.92), alt = larg * 31 / 40;
   for (const [num, linhas] of [...porSemana].sort((a, b) => a[0] - b[0])) {
     const sem = model.semanaByNumero.get(num);
     if (!sem) continue;
@@ -679,12 +666,12 @@ function renderRio(model) {
   const xh = xDe(th).toFixed(1);
   const hojeTxt = `${String(hoje.getDate()).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const marcadorHoje = `<g class="rio-hoje">
-      <line x1="${xh}" y1="16" x2="${xh}" y2="${rioBase + 6}" class="rio-hoje-linha"/>
-      <rect x="${xh - 30}" y="2" width="60" height="18" rx="9" class="rio-hoje-pilula"/>
-      <text x="${xh}" y="15" text-anchor="middle" class="rio-hoje-txt">hoje ${hojeTxt}</text>
+      <line x1="${xh}" y1="15" x2="${xh}" y2="${rioBase + 5}" class="rio-hoje-linha"/>
+      <rect x="${xh - 32}" y="0" width="64" height="18" rx="9" class="rio-hoje-pilula"/>
+      <text x="${xh}" y="13" text-anchor="middle" class="rio-hoje-txt">hoje ${hojeTxt}</text>
     </g>`;
-  const marco = (x, ico, txt, anc) => `<text x="${x}" y="${rioTopo - 8}" text-anchor="middle" class="rio-marco-ico">${ico}</text>
-      <text x="${x}" y="${H - 6}" text-anchor="${anc}" class="rio-marco-txt">${txt}</text>`;
+  const marco = (x, ico, txt, anc) => `<text x="${x}" y="${rioTopo - 5}" text-anchor="middle" class="rio-marco-ico">${ico}</text>
+      <text x="${x}" y="${H - 4}" text-anchor="${anc}" class="rio-marco-txt">${txt}</text>`;
   const marcos = marco(xDe(t0), "🚩", `Abertura ${s0.inicio.slice(0, 5)}`, "start") +
     marco(xDe(t1), "🏁", `Entrega ${s18.inicio.slice(0, 5)}`, "end");
 
@@ -694,18 +681,14 @@ function renderRio(model) {
     </svg>`;
 
   // Em tela estreita o rio rola para os lados: abre já centralizado no "hoje"
-  const rolagem = sec.querySelector(".rio-scroll");
+  const rolagem = caixa;
   requestAnimationFrame(() => {
     if (rolagem.scrollWidth > rolagem.clientWidth) {
       rolagem.scrollLeft = (xh / W) * rolagem.scrollWidth - rolagem.clientWidth / 2;
     }
   });
 
-  const andamento = model.execucao;
-  const aIniciar = model.totalPoliticas - model.disseminadas - andamento;
-  document.getElementById("rio-leitura").textContent =
-    (model.semanaAtual && !model.semanaAtual.marco ? `Estamos na semana ${String(model.semanaAtual.numero).padStart(2, "0")}. ` : "") +
-    `${model.disseminadas} disseminadas, ${andamento} em andamento e ${aIniciar} a iniciar.`;
+
 }
 
 /* Ranking de adesão (HRC I + HRC II): da maior para a menor, em escala real
@@ -883,6 +866,17 @@ async function main() {
       '<div style="padding:2rem;font-family:sans-serif">Não foi possível carregar os dados do painel. Verifique se o arquivo <code>data.json</code> está publicado junto com esta página.</div>';
   }
 }
+
+// O rio acompanha a largura do card (sem reanimar as capivaras)
+let timerRio, larguraRio = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(timerRio);
+  timerRio = setTimeout(() => {
+    const caixa = document.querySelector("#secao-rio .rio-scroll");
+    if (!caixa || !modeloAtual) return;
+    if (Math.abs(caixa.clientWidth - larguraRio) > 8) { larguraRio = caixa.clientWidth; renderRio(modeloAtual); }
+  }, 200);
+});
 
 // Redesenha o gráfico quando a tela muda de faixa (o viewBox depende da largura)
 let modeloAtual = null;

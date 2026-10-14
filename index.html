@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=15" />
+<link rel="stylesheet" href="style.css?v=16" />
 </head>
 <body>
 <main>
@@ -130,10 +130,17 @@
               <div class="barra-legenda">
                 <span>0%</span><span class="barra-legenda-meta">Meta</span><span>100%</span>
               </div>
-              <div class="capy-wrap">
-                <span class="capy-title">Políticas</span>
-                <div class="capy-row" id="capy-row"></div>
-                <span class="capy-count" id="capy-count">0/19 disseminadas</span>
+              <div class="capy-rio" id="secao-rio">
+                <div class="capy-rio-topo">
+                  <span class="capy-title">Políticas no rio, por semana prevista</span>
+                  <span class="rio-chave">
+                    <span><i class="dot" style="background:#a8784c"></i>Disseminada</span>
+                    <span><i class="dot" style="background:#f5c518"></i>Em andamento (passarinho)</span>
+                    <span><i class="dot" style="background:#e0dac8"></i>A iniciar</span>
+                  </span>
+                </div>
+                <div class="rio-scroll"><div class="rio-svg"></div></div>
+                <span class="capy-count" id="capy-count"></span>
               </div>
             </div>
           </div>
@@ -287,23 +294,6 @@
       </div>
     </section>
 
-    <section class="card rio" id="secao-rio" hidden>
-      <div class="ritmo-head">
-        <div>
-          <div class="eyebrow">🛶 Linha do tempo</div>
-          <h2>Onde estamos no rio?</h2>
-          <p class="ritmo-sub">Cada capivara é uma política, na semana em que estava prevista. A linha tracejada marca o dia de hoje.</p>
-        </div>
-        <div class="ritmo-chave">
-          <span><i class="dot" style="background:#a8784c"></i>Disseminada</span>
-          <span><i class="dot" style="background:#f5c518"></i>Em andamento (com passarinho)</span>
-          <span><i class="dot" style="background:#e0dac8"></i>A iniciar</span>
-        </div>
-      </div>
-      <div class="rio-scroll"><div class="rio-svg"></div></div>
-      <p class="ritmo-leitura" id="rio-leitura"></p>
-    </section>
-
     <section class="card ritmo" id="secao-reuniao" hidden>
       <div class="ritmo-head">
         <div>
@@ -381,6 +371,6 @@
   </defs>
 </svg>
 
-<script src="app.js?v=14"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
