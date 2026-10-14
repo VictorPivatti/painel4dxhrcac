@@ -281,7 +281,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .atraso-late { font-size: .7rem; font-weight: 700; color: var(--danger); }
 .atraso-prog { font-size: .7rem; font-weight: 500; color: var(--water); }
 .atraso-na { font-size: .7rem; color: var(--muted-foreground); }
-.adesao-ok { font-size: .75rem; font-weight: 600; color: var(--muted-foreground); }
+.adesao-ok { font-size: .75rem; font-weight: 700; color: var(--success); }
+.adesao-media { font-size: .75rem; font-weight: 700; color: #a06a00; }
 .adesao-baixa { font-size: .75rem; font-weight: 700; color: var(--danger); }
 .data-ruim {
   color: var(--danger); font-weight: 600; text-decoration: underline wavy var(--danger);
@@ -350,13 +351,13 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 /* Números alinhados (colunas de datas, dias e porcentagens não "dançam") */
 .mini-valor, .atual-valor, .atual-num, .mes-valor, .col-semana,
 .col-periodo, .col-inicio, .atraso-ok, .atraso-late, .atraso-prog,
-.adesao-ok, .adesao-baixa,
+.adesao-ok, .adesao-media, .adesao-baixa,
 .capy-count, .hero-meta strong { font-variant-numeric: tabular-nums lining-nums; }
 
 /* Piso de legibilidade: nada abaixo de ~12px no computador */
 .mini-label, .barra-meta-label, .mes-esperado { font-size: .72rem; }
 .mini-hint, .prox-detalhe, .atraso-ok, .atraso-late, .atraso-prog, .atraso-na,
-.adesao-ok, .adesao-baixa,
+.adesao-ok, .adesao-media, .adesao-baixa,
 .status-pill, .atual-label, .atual-meta, .mes-label, .marco-sub, .marco-relatorio,
 .proximas-titulo, .eyebrow, .atual-kicker { font-size: .78rem; }
 .placar-sub, .ritmo-sub { font-size: .85rem; line-height: 1.5; }
@@ -490,7 +491,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
   transition-delay: calc(var(--i, 0) * 90ms + 500ms);
 }
 .adesao-baixa-barra { background: var(--danger); }
-.adesao-ok-barra { background: var(--jungle); }
+.adesao-ok-barra { background: var(--success); }
+.adesao-media-barra { background: var(--warning); }
 @media (max-width: 640px) { .adesao-cel { align-items: flex-end; } }
 
 /* B · círculos dos meses */
@@ -608,3 +610,11 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .festa-agua, .peixe { animation: none !important; }
 }
+
+/* v12 · adesão geral (HRC I + HRC II) com critério oficial e traço da meta */
+.adesao-trilho { position: relative; }
+.adesao-trilho::after {
+  content: ""; position: absolute; top: -1px; bottom: -1px; left: calc(var(--meta, 90) * 1%);
+  width: 2px; background: var(--jungle-deep); opacity: .55; border-radius: 1px;
+}
+.placar-fonte { margin: .3rem 0 0; font-size: .78rem; color: var(--muted-foreground); }

@@ -39,16 +39,24 @@
     { "nome": "Código de Conduta Ética", "setor": "Comitê de Compliance" }
   ],
   "adesaoTreinamento": {
-    "Suprimentos": 10.6,
-    "Gestão de Contratos": 14.2,
-    "Controle Interno": 9.3,
-    "Comunicação e Marketing": 11.2,
-    "Orçamento e Custos": 10.9,
-    "Gestão de Projetos": 17.4,
-    "Infraestrutura": 8.6,
-    "Planejamento Estratégico": 5.2,
-    "Política da Qualidade": 17.2,
-    "Gestão do Cuidado": 4.8
+    "Suprimentos": 11.9,
+    "Gestão de Contratos": 15.1,
+    "Controle Interno": 10.0,
+    "Comunicação e Marketing": 12.4,
+    "Orçamento e Custos": 13.3,
+    "Gestão de Projetos": 18.4,
+    "Infraestrutura": 9.9,
+    "Planejamento Estratégico": 5.8,
+    "Política da Qualidade": 18.2,
+    "Gestão do Cuidado": 4.7
+  },
+  "adesaoInfo": {
+    "abrangencia": "HRC I + HRC II",
+    "fonte": "Humand",
+    "dataRelatorio": "30/09/2026",
+    "meta": 90,
+    "alerta": 70,
+    "mediaGeral": 12.0
   },
   "semanas": [
     { "numero": 0, "inicio": "24/07/2026", "fim": "24/07/2026", "rotulo": "Semana 00 — Reunião de Abertura", "marco": true, "descricao": "Reunião de abertura dos Guardiões das Políticas Institucionais." },

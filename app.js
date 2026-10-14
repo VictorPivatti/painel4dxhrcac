@@ -49,7 +49,7 @@ async function loadData() {
 }
 
 function buildModel(data) {
-  const { projeto, mesesEsperado, politicas, semanas, cronograma, acoes, adesaoTreinamento } = data;
+  const { projeto, mesesEsperado, politicas, semanas, cronograma, acoes, adesaoTreinamento, adesaoInfo } = data;
   const metaInicial = projeto.metaInicial;
   const metaFinal = projeto.metaFinal;
   // Cada política vale 1/19 do índice; a meta de 80% equivale a 15,2 políticas.
@@ -208,6 +208,7 @@ function buildModel(data) {
     semanaByNumero,
     politicaSetor: new Map(politicas.map((p) => [p.nome, p.setor])),
     adesaoPorPolitica,
+    adesaoInfo: { meta: 90, alerta: 70, ...(adesaoInfo || {}) },
   };
 }
 
@@ -345,6 +346,14 @@ function render(model) {
   renderVeredito(model);
   renderFesta(model);
 
+  const fonteAdesao = document.getElementById("placar-fonte");
+  if (fonteAdesao && model.adesaoInfo.dataRelatorio) {
+    const ai = model.adesaoInfo;
+    fonteAdesao.textContent = `% Adesão: ${ai.abrangencia}, ${ai.fonte} em ${ai.dataRelatorio}` +
+      (ai.mediaGeral != null ? ` · média geral ${ai.mediaGeral.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}%` : "") +
+      ` · meta ${ai.meta}% (amarelo a partir de ${ai.alerta}%).`;
+  }
+
   // Placar semanal
   const placarEl = document.getElementById("placar-body");
   placarEl.innerHTML = "";
@@ -363,7 +372,7 @@ function render(model) {
       <div class="col-inicio" data-rotulo="Liberado">${linha.inicio ? (dataValida(linha.inicio) ? linha.inicio : `<span class="data-ruim" title="Formato inválido">${linha.inicio}</span>`) : "—"}</div>
       <div class="col-atraso" data-rotulo="Atraso">${atrasoBadge(ad)}</div>
       <div class="col-status" data-rotulo="Status"><span class="status-pill status-${linha.status}">${STATUS_LABEL[linha.status]}</span></div>
-      <div class="col-adesao" data-rotulo="% Adesão">${adesaoBadge(model.adesaoPorPolitica.get(linha.politica))}</div>
+      <div class="col-adesao" data-rotulo="% Adesão">${adesaoBadge(model.adesaoPorPolitica.get(linha.politica), model.adesaoInfo)}</div>
     `;
     placarEl.appendChild(row);
   }
@@ -501,15 +510,15 @@ function atrasoBadge(ad) {
   return `<span class="atraso-na">—</span>`;
 }
 
-/* Adesão ao treinamento (relatório externo, repassado manualmente).
-   Sem dado para a política ainda = traço. Abaixo de 20% = alerta (faixa baixa
-   observada no relatório de origem); acima, tom neutro. */
-function adesaoBadge(pct) {
+/* Adesão ao treinamento (relatório do Humand, HRC I + HRC II, repassado manualmente).
+   Critério oficial do relatório: >= meta (90%) verde, >= alerta (70%) amarelo,
+   abaixo disso vermelho. Sem dado para a política = traço. A mini barra usa a
+   escala real de 0 a 100%, com um traço marcando a meta. */
+function adesaoBadge(pct, info) {
   if (pct === undefined || pct === null) return `<span class="atraso-na">—</span>`;
-  const cls = pct < 20 ? "adesao-baixa" : "adesao-ok";
-  // Mini barra em escala real de 0 a 100% (100% = todos os colaboradores treinados)
-  return `<span class="adesao-cel"><span class="${cls}">${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</span>` +
-    `<span class="adesao-trilho" aria-hidden="true"><i class="${cls}-barra" style="--pct:${Math.min(100, pct)}"></i></span></span>`;
+  const cls = pct >= info.meta ? "adesao-ok" : pct >= info.alerta ? "adesao-media" : "adesao-baixa";
+  return `<span class="adesao-cel"><span class="${cls}">${pct.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>` +
+    `<span class="adesao-trilho" aria-hidden="true" style="--meta:${info.meta}"><i class="${cls}-barra" style="--pct:${Math.min(100, pct)}"></i></span></span>`;
 }
 
 function marcosBloco(semanas) {
