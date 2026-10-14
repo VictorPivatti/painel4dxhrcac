@@ -618,3 +618,70 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
   width: 2px; background: var(--jungle-deep); opacity: .55; border-radius: 1px;
 }
 .placar-fonte { margin: .3rem 0 0; font-size: .78rem; color: var(--muted-foreground); }
+
+/* ==========================================================================
+   v13 · Lote 2: linha do tempo do rio e ranking de adesão
+   ========================================================================== */
+.rio-scroll { margin-top: .6rem; overflow-x: auto; }
+.rio-svg > svg { width: 100%; min-width: 760px; height: auto; display: block; overflow: visible; }
+.rio-agua { fill: #9ccbd8; opacity: .55; }
+.rio-corrente { fill: none; stroke: #fff; stroke-width: 1.4; stroke-linecap: round; stroke-dasharray: 10 22; opacity: .8; animation: rio-flui 9s linear infinite; }
+.rio-corrente2 { stroke: #006078; opacity: .25; stroke-dasharray: 6 26; animation-duration: 13s; }
+@keyframes rio-flui { to { stroke-dashoffset: -320; } }
+.rio-capy { transform-box: fill-box; transform-origin: 50% 100%; }
+.rio-capy:hover { filter: drop-shadow(0 2px 3px rgba(0,34,10,.35)); }
+.rio-hoje-linha { stroke: var(--jungle-deep); stroke-width: 1.4; stroke-dasharray: 4 4; }
+.rio-hoje-pilula { fill: var(--jungle-deep); }
+.rio-hoje-txt { fill: #fff; font: 600 10.5px 'Inter', sans-serif; }
+.rio-marco-ico { font-size: 16px; }
+.rio-marco-txt { font: 600 10.5px 'Inter', sans-serif; fill: #8a6400; }
+.anim-pronto:not(.anim-play) .rio-capy { transform: scale(0); }
+.anim-play .rio-capy { animation: capy-surge 1s cubic-bezier(.34,1.45,.64,1) both; animation-delay: calc(var(--i) * 120ms); }
+@keyframes capy-surge { from { transform: translateY(14px) scale(.3); opacity: 0; } to { transform: none; opacity: 1; } }
+.anim-pronto:not(.anim-play) .rio-hoje { opacity: 0; }
+.anim-play .rio-hoje { animation: hoje-aparece 1s ease-out 2.4s both; }
+@keyframes hoje-aparece { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* Ranking */
+.rk-escala, .rk {
+  display: grid; align-items: center; gap: .9rem;
+  grid-template-columns: 2.4rem minmax(9rem, 15rem) minmax(0, 1fr) 3.6rem;
+}
+.rk-escala { margin-top: 1rem; height: 1.2rem; }
+.rk-escala-eixo { position: relative; height: 100%; }
+.rk-escala-eixo span {
+  position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap;
+  font-size: .7rem; font-weight: 600; color: var(--muted-foreground);
+}
+.rk-escala-eixo span:last-child { transform: translateX(-100%); }
+.rk-escala-eixo .rk-escala-meta { color: var(--jungle-deep); }
+.ranking-lista { list-style: none; margin: .35rem 0 0; padding: 0; display: grid; gap: .55rem; }
+.rk { padding: .55rem 0; border-bottom: 1px solid rgba(216,218,195,.6); }
+.rk:last-child { border-bottom: 0; }
+.rk-pos { font-size: 1.2rem; text-align: center; font-weight: 700; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.rk-pos:not(:empty) { line-height: 1; }
+.rk-nome { display: flex; flex-direction: column; min-width: 0; }
+.rk-nome strong { font-size: .92rem; font-weight: 600; }
+.rk-nome span { font-size: .74rem; color: var(--muted-foreground); }
+.rk-trilho { position: relative; height: .8rem; border-radius: 999px; background: var(--track); }
+.rk-trilho i {
+  position: absolute; inset: 0 auto 0 0; border-radius: inherit;
+  width: calc(var(--pct) * 1%); transition: width 1.8s cubic-bezier(.65,0,.35,1);
+  transition-delay: calc(var(--i, 0) * 110ms + 300ms);
+}
+.rk-trilho::before, .rk-trilho::after { content: ""; position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; }
+.rk-trilho::before { left: calc(var(--media) * 1%); background: var(--muted-foreground); opacity: .45; }
+.rk-trilho::after  { left: calc(var(--meta) * 1%); background: var(--jungle-deep); opacity: .7; }
+.rk-valor { text-align: right; font-size: .95rem !important; font-variant-numeric: tabular-nums; }
+.ranking-lista.anim-pronto:not(.anim-play) .rk-trilho i { width: 0; }
+@media (max-width: 640px) {
+  .rk-escala { grid-template-columns: 2rem minmax(0, 1fr) 3.2rem; }
+  .rk-escala > span:nth-child(2), .rk-escala > span:last-child, .rk-escala-eixo span:last-child { display: none; }
+  .rk-escala-eixo { grid-column: 2 / 4; }
+  .rk { grid-template-columns: 2rem minmax(0, 1fr) 3.2rem; grid-template-areas: "pos nome valor" "pos barra barra"; row-gap: .45rem; }
+  .rk-pos { grid-area: pos; } .rk-nome { grid-area: nome; } .rk-trilho { grid-area: barra; } .rk-valor { grid-area: valor; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rio-corrente, .rio-capy, .rio-hoje { animation: none !important; }
+  .rk-trilho i { transition: none !important; }
+}

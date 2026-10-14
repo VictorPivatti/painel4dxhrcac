@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=12" />
+<link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
 <main>
@@ -236,6 +236,23 @@
       </div>
     </section>
 
+    <section class="card rio" id="secao-rio" hidden>
+      <div class="ritmo-head">
+        <div>
+          <div class="eyebrow">🛶 Linha do tempo</div>
+          <h2>Onde estamos no rio?</h2>
+          <p class="ritmo-sub">Cada capivara é uma política, na semana em que estava prevista. A linha tracejada marca o dia de hoje.</p>
+        </div>
+        <div class="ritmo-chave">
+          <span><i class="dot" style="background:#a8784c"></i>Disseminada</span>
+          <span><i class="dot" style="background:#f5c518"></i>Em andamento (com passarinho)</span>
+          <span><i class="dot" style="background:#e0dac8"></i>A iniciar</span>
+        </div>
+      </div>
+      <div class="rio-scroll"><div class="rio-svg"></div></div>
+      <p class="ritmo-leitura" id="rio-leitura"></p>
+    </section>
+
     <section class="card ritmo" id="secao-reuniao" hidden>
       <div class="ritmo-head">
         <div>
@@ -251,6 +268,19 @@
       <div class="ritmo-svg"></div>
       <p class="ritmo-leitura"></p>
       <p class="ritmo-nota">A adesão ao treinamento de cada política (HRC I + HRC II) está no placar abaixo.</p>
+    </section>
+
+    <section class="card ranking" id="secao-ranking" hidden>
+      <div class="ritmo-head">
+        <div>
+          <div class="eyebrow">🏅 Adesão ao treinamento</div>
+          <h2>Quem está na frente?</h2>
+          <p class="ritmo-sub" id="ranking-sub"></p>
+        </div>
+      </div>
+      <div class="rk-escala" aria-hidden="true"><span></span><span></span><div class="rk-escala-eixo" id="rk-escala-eixo"></div><span></span></div>
+      <ol class="ranking-lista" id="ranking-lista"></ol>
+      <p class="ritmo-nota" id="ranking-nota"></p>
     </section>
 
     <section class="card placar">
@@ -300,6 +330,6 @@
   </defs>
 </svg>
 
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

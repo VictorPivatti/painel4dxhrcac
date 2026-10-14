@@ -345,6 +345,8 @@ function render(model) {
   renderReuniao(model);
   renderVeredito(model);
   renderFesta(model);
+  renderRio(model);
+  renderRanking(model);
 
   const fonteAdesao = document.getElementById("placar-fonte");
   if (fonteAdesao && model.adesaoInfo.dataRelatorio) {
@@ -611,6 +613,134 @@ function renderFesta(model) {
     .map((l) => `<li><strong>${l.politica}</strong><span>liberada em ${l.inicio}</span></li>`).join("");
 }
 
+/* Linha do tempo do rio: da abertura (semana 00) à entrega (semana 18).
+   Cada capivara fica na semana PREVISTA da política; a cor diz o status.
+   O atraso real aparece ao passar o mouse, para não poluir o desenho. */
+function renderRio(model) {
+  const sec = document.getElementById("secao-rio");
+  if (!sec) return;
+  const s0 = model.semanaByNumero.get(0), s18 = model.semanaByNumero.get(18);
+  if (!s0 || !s18) { sec.hidden = true; return; }
+  sec.hidden = false;
+
+  const W = 1000, H = 196, padE = 34, padD = 34;
+  const t0 = parseDateBR(s0.inicio).getTime(), t1 = parseDateBR(s18.inicio).getTime();
+  const xDe = (t) => padE + ((t - t0) / (t1 - t0)) * (W - padE - padD);
+  const rioTopo = 112, rioBase = 140;
+
+  // Rio com margens onduladas
+  const onda = (y, amp, fase) => {
+    let d = "";
+    for (let x = 0; x <= W; x += 20) d += `${x ? "L" : "M"}${x},${(y + Math.sin(x / 55 + fase) * amp).toFixed(1)} `;
+    return d;
+  };
+  const margemSup = onda(rioTopo, 3, 0);
+  let margemInf = "";
+  for (let x = W; x >= 0; x -= 20) margemInf += `L${x},${(rioBase + Math.sin(x / 48 + 1.3) * 2.5).toFixed(1)} `;
+  const rio = `<path d="${margemSup}${margemInf}Z" class="rio-agua"/>
+    <path d="${onda(rioTopo + 10, 2, 1)}" class="rio-corrente"/>
+    <path d="${onda(rioTopo + 19, 2, 2.4)}" class="rio-corrente rio-corrente2"/>`;
+
+  // Rótulos das semanas
+  let semanas = "";
+  for (const [num, sem] of model.semanaByNumero) {
+    if (sem.marco) continue;
+    const meio = parseDateBR(sem.inicio).getTime() + 2 * MS_DIA;
+    semanas += `<text x="${xDe(meio).toFixed(1)}" y="${rioBase + 22}" class="rot-eixo" text-anchor="middle">${String(num).padStart(2, "0")}</text>`;
+  }
+
+  // Capivaras (empilhadas quando a semana tem duas políticas)
+  const porSemana = new Map();
+  for (const l of model.linhasOrdenadas) {
+    if (!porSemana.has(l.semana)) porSemana.set(l.semana, []);
+    porSemana.get(l.semana).push(l);
+  }
+  let capys = "", ordem = 0;
+  const larg = 40, alt = 31;
+  for (const [num, linhas] of [...porSemana].sort((a, b) => a[0] - b[0])) {
+    const sem = model.semanaByNumero.get(num);
+    if (!sem) continue;
+    const cx = xDe(parseDateBR(sem.inicio).getTime() + 2 * MS_DIA);
+    linhas.forEach((l, j) => {
+      const estado = l.status === "concluido" ? "concluida" : l.status === "andamento" ? "andamento" : "pendente";
+      const ad = model.aderenciaPorChave.get(`${l.semana}::${l.politica}`);
+      const quando = l.status === "concluido"
+        ? `liberada em ${l.inicio}${ad && ad.estado === "atrasado" ? ` (+${ad.dias} dias)` : ad && ad.estado === "no-prazo" ? " (no prazo)" : ""}`
+        : STATUS_LABEL[l.status].toLowerCase();
+      const y = rioTopo + 4 - alt - j * (alt - 3);
+      const svg = iconeCapivara(estado).replace('class="capy-svg"', 'class="rio-capy-svg"').replace("<svg ", `<svg x="${(cx - larg / 2).toFixed(1)}" y="${y}" width="${larg}" height="${alt}" overflow="visible" `);
+      capys += `<g class="rio-capy" style="--i:${ordem++}"><title>${l.politica} · semana ${String(l.semana).padStart(2, "0")} · ${quando}</title>${svg}</g>`;
+    });
+  }
+
+  // Hoje e marcos
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const th = Math.min(Math.max(hoje.getTime(), t0), t1);
+  const xh = xDe(th).toFixed(1);
+  const hojeTxt = `${String(hoje.getDate()).padStart(2, "0")}/${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+  const marcadorHoje = `<g class="rio-hoje">
+      <line x1="${xh}" y1="16" x2="${xh}" y2="${rioBase + 6}" class="rio-hoje-linha"/>
+      <rect x="${xh - 30}" y="2" width="60" height="18" rx="9" class="rio-hoje-pilula"/>
+      <text x="${xh}" y="15" text-anchor="middle" class="rio-hoje-txt">hoje ${hojeTxt}</text>
+    </g>`;
+  const marco = (x, ico, txt, anc) => `<text x="${x}" y="${rioTopo - 8}" text-anchor="middle" class="rio-marco-ico">${ico}</text>
+      <text x="${x}" y="${H - 6}" text-anchor="${anc}" class="rio-marco-txt">${txt}</text>`;
+  const marcos = marco(xDe(t0), "🚩", `Abertura ${s0.inicio.slice(0, 5)}`, "start") +
+    marco(xDe(t1), "🏁", `Entrega ${s18.inicio.slice(0, 5)}`, "end");
+
+  sec.querySelector(".rio-svg").innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Linha do tempo das políticas por semana prevista">
+      ${rio}${semanas}${marcos}${capys}${marcadorHoje}
+    </svg>`;
+
+  // Em tela estreita o rio rola para os lados: abre já centralizado no "hoje"
+  const rolagem = sec.querySelector(".rio-scroll");
+  requestAnimationFrame(() => {
+    if (rolagem.scrollWidth > rolagem.clientWidth) {
+      rolagem.scrollLeft = (xh / W) * rolagem.scrollWidth - rolagem.clientWidth / 2;
+    }
+  });
+
+  const andamento = model.execucao;
+  const aIniciar = model.totalPoliticas - model.disseminadas - andamento;
+  document.getElementById("rio-leitura").textContent =
+    (model.semanaAtual && !model.semanaAtual.marco ? `Estamos na semana ${String(model.semanaAtual.numero).padStart(2, "0")}. ` : "") +
+    `${model.disseminadas} disseminadas, ${andamento} em andamento e ${aIniciar} a iniciar.`;
+}
+
+/* Ranking de adesão (HRC I + HRC II): da maior para a menor, em escala real
+   de 0 a 100%, com a meta oficial e a média geral marcadas no trilho. */
+function renderRanking(model) {
+  const sec = document.getElementById("secao-ranking");
+  if (!sec) return;
+  const info = model.adesaoInfo;
+  const itens = [...model.adesaoPorPolitica].map(([politica, pct]) => ({ politica, pct })).sort((a, b) => b.pct - a.pct);
+  if (!itens.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+
+  const fmt = (n) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const media = info.mediaGeral != null ? info.mediaGeral : itens.reduce((s, x) => s + x.pct, 0) / itens.length;
+  const medalhas = ["🥇", "🥈", "🥉"];
+  document.getElementById("ranking-sub").textContent =
+    `Percentual de colaboradores dos dois hospitais (${info.abrangencia}) que concluíram o treinamento de cada política. ${info.fonte}, ${info.dataRelatorio}.`;
+  document.getElementById("rk-escala-eixo").innerHTML =
+    `<span style="left:${media}%">média ${fmt(media)}%</span><span class="rk-escala-meta" style="left:${info.meta}%">meta ${info.meta}%</span><span style="left:100%">100%</span>`;
+  document.getElementById("ranking-lista").innerHTML = itens.map((x, i) => {
+    const cls = x.pct >= info.meta ? "adesao-ok" : x.pct >= info.alerta ? "adesao-media" : "adesao-baixa";
+    return `<li class="rk" style="--i:${i}">
+      <span class="rk-pos">${medalhas[i] || `${i + 1}º`}</span>
+      <div class="rk-nome"><strong>${x.politica}</strong><span>${model.politicaSetor.get(x.politica) || ""}</span></div>
+      <div class="rk-trilho" style="--meta:${info.meta};--media:${media}"><i class="${cls}-barra" style="--pct:${Math.min(100, x.pct)}"></i></div>
+      <span class="rk-valor ${cls}">${fmt(x.pct)}%</span>
+    </li>`;
+  }).join("");
+
+  const semDado = model.linhasOrdenadas
+    .filter((l) => l.status === "concluido" && !model.adesaoPorPolitica.has(l.politica)).map((l) => l.politica);
+  document.getElementById("ranking-nota").textContent = semDado.length
+    ? `Disseminadas sem dado no relatório: ${semDado.join(", ")}.` : "";
+}
+
 /* ==========================================================================
    v9 · Animações que mostram o dado chegando
    Cada seção anima uma única vez, quando entra na tela. Quem pediu ao sistema
@@ -710,6 +840,10 @@ function animarPainel() {
 
   // C + F · barras de reunião crescendo e halo da pendente (tudo em CSS)
   aoAparecer(document.querySelector("#secao-reuniao .ritmo-svg"));
+
+  // Linha do tempo: capivaras surgem em sequência; ranking: barras crescem (CSS)
+  aoAparecer(document.getElementById("secao-rio")); // a seção inteira: o desenho pode estar rolado para o lado
+  aoAparecer(document.getElementById("ranking-lista"));
 
   // D + E · linhas do placar em cascata e mini barras de adesão (CSS)
   const placar = document.getElementById("placar-body");
