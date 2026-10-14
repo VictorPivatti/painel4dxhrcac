@@ -38,6 +38,18 @@
     { "nome": "Gestão Ambiental", "setor": "Gerenciamento de Resíduos" },
     { "nome": "Código de Conduta Ética", "setor": "Comitê de Compliance" }
   ],
+  "adesaoTreinamento": {
+    "Suprimentos": 10.6,
+    "Gestão de Contratos": 14.2,
+    "Controle Interno": 9.3,
+    "Comunicação e Marketing": 11.2,
+    "Orçamento e Custos": 10.9,
+    "Gestão de Projetos": 17.4,
+    "Infraestrutura": 8.6,
+    "Planejamento Estratégico": 5.2,
+    "Política da Qualidade": 17.2,
+    "Gestão do Cuidado": 4.8
+  },
   "semanas": [
     { "numero": 0, "inicio": "24/07/2026", "fim": "24/07/2026", "rotulo": "Semana 00 — Reunião de Abertura", "marco": true, "descricao": "Reunião de abertura dos Guardiões das Políticas Institucionais." },
     { "numero": 1, "inicio": "27/07/2026", "fim": "31/07/2026", "rotulo": "Semana 01" },

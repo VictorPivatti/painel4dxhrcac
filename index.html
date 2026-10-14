@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=7" />
+<link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 <main>
@@ -211,21 +211,21 @@
       </div>
     </section>
 
-    <section class="card ritmo" id="secao-ritmo" hidden>
+    <section class="card ritmo" id="secao-reuniao" hidden>
       <div class="ritmo-head">
         <div>
-          <div class="eyebrow">📉 Ritmo de liberação</div>
-          <h2>Estamos acelerando?</h2>
-          <p class="ritmo-sub">Cada barra é uma política, em ordem de semana. Acima da linha, o treinamento foi liberado dentro da semana prevista; abaixo, passou do prazo. A altura é a distância em dias.</p>
+          <div class="eyebrow">🤝 Reuniões semanais</div>
+          <h2>Estamos nos encontrando?</h2>
+          <p class="ritmo-sub">Cada barra é uma política já iniciada, em ordem de semana. Acima da linha, a reunião semanal com o guardião aconteceu; abaixo, ainda não aconteceu.</p>
         </div>
         <div class="ritmo-chave">
-          <span><i class="dot" style="background:#d93500"></i>Passou do prazo</span>
-          <span><i class="dot" style="background:#0080a3"></i>Dentro da semana</span>
+          <span><i class="dot" style="background:#1a8f4c"></i>Reunião realizada</span>
+          <span><i class="dot" style="background:#d93500"></i>Reunião pendente</span>
         </div>
       </div>
       <div class="ritmo-svg"></div>
       <p class="ritmo-leitura"></p>
-      <p class="ritmo-nota">Os valores linha a linha estão na coluna Atraso do placar abaixo.</p>
+      <p class="ritmo-nota">O percentual de adesão ao treinamento, por política, está no placar abaixo.</p>
     </section>
 
     <section class="card placar">
@@ -252,7 +252,7 @@
           <div>Início da Disseminação</div>
           <div>Atraso</div>
           <div>Status</div>
-          <div>Reunião Realizada?</div>
+          <div>% Adesão</div>
         </div>
         <div id="placar-body" class="placar-body"></div>
       </div>
@@ -274,6 +274,6 @@
   </defs>
 </svg>
 
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

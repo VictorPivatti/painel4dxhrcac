@@ -49,7 +49,7 @@ async function loadData() {
 }
 
 function buildModel(data) {
-  const { projeto, mesesEsperado, politicas, semanas, cronograma, acoes } = data;
+  const { projeto, mesesEsperado, politicas, semanas, cronograma, acoes, adesaoTreinamento } = data;
   const metaInicial = projeto.metaInicial;
   const metaFinal = projeto.metaFinal;
   // Cada política vale 1/19 do índice; a meta de 80% equivale a 15,2 políticas.
@@ -146,6 +146,14 @@ function buildModel(data) {
     ? serieRitmo.length - sequenciaNoPrazo
     : -1;
 
+  // Série de reuniões: mesmas políticas já iniciadas, classificadas por reunião realizada
+  const serieReuniao = serieRitmo; // mesma base (políticas com disseminação já ocorrida)
+  const reunioesRealizadas = serieReuniao.filter((x) => x.linha.reuniao === "Sim").length;
+  const reunioesPendentes = serieReuniao.length - reunioesRealizadas;
+
+  // --- Adesão ao treinamento (relatório externo, repassado manualmente) ---
+  const adesaoPorPolitica = new Map(Object.entries(adesaoTreinamento || {}));
+
   // --- Pendências: prazo da semana já venceu e a política não avançou ---
   const previstoFimPorPolitica = new Map();
   for (const [semanaStr, nomes] of Object.entries(cronograma)) {
@@ -195,9 +203,11 @@ function buildModel(data) {
     proximas3: proximas.slice(0, 3), statusMci, datasInvalidas,
     noPrazo, totalIniciadas: iniciadas.length, atrasoMedio,
     aderenciaPorChave, serieRitmo, sequenciaNoPrazo, indiceVirada,
+    serieReuniao, reunioesRealizadas, reunioesPendentes,
     linhasOrdenadas: [...linhas].sort((a, b) => a.semana - b.semana),
     semanaByNumero,
     politicaSetor: new Map(politicas.map((p) => [p.nome, p.setor])),
+    adesaoPorPolitica,
   };
 }
 
@@ -330,7 +340,7 @@ function render(model) {
     proxEl.appendChild(li);
   }
 
-  renderRitmo(model);
+  renderReuniao(model);
 
   // Placar semanal
   const placarEl = document.getElementById("placar-body");
@@ -352,7 +362,7 @@ function render(model) {
       <div class="col-inicio" data-rotulo="Liberado">${linha.inicio ? (dataValida(linha.inicio) ? linha.inicio : `<span class="data-ruim" title="Formato inválido">${linha.inicio}</span>`) : "—"}</div>
       <div class="col-atraso" data-rotulo="Atraso">${atrasoBadge(ad)}</div>
       <div class="col-status" data-rotulo="Status"><span class="status-pill status-${linha.status}">${STATUS_LABEL[linha.status]}</span></div>
-      <div class="col-reuniao" data-rotulo="Reunião">${linha.reuniao}</div>
+      <div class="col-adesao" data-rotulo="% Adesão">${adesaoBadge(model.adesaoPorPolitica.get(linha.politica))}</div>
     `;
     placarEl.appendChild(row);
   }
@@ -361,41 +371,33 @@ function render(model) {
   if (semanaFinal) placarEl.appendChild(marcoRow(semanaFinal, true));
 }
 
-/* Gráfico de ritmo: dias de cada liberação em relação ao fim da semana prevista.
-   Diverging — acima da linha = passou do prazo, abaixo = saiu dentro da semana.
+/* Gráfico de reuniões: uma barra por política já iniciada, em ordem de semana.
+   Diverging, mesmo desenho do gráfico de ritmo que este substitui — acima da
+   linha = reunião realizada, abaixo = ainda não realizada. Altura uniforme
+   (aqui não há "quanto", só sim/não).
    Par de cores validado para daltonismo (script validate_palette do skill dataviz). */
-const COR_ATRASO = "#d93500";
-const COR_PRAZO = "#0080a3";
+const COR_SEM_REUNIAO = "#d93500";
+const COR_COM_REUNIAO = "#1a8f4c";
 
-function renderRitmo(model) {
-  const secao = document.getElementById("secao-ritmo");
-  const serie = model.serieRitmo;
+function renderReuniao(model) {
+  const secao = document.getElementById("secao-reuniao");
+  const serie = model.serieReuniao;
   if (!serie.length) {
     secao.hidden = true;
     return;
   }
   secao.hidden = false;
 
-  // viewBox proporcional à largura da tela: mantém o texto legível no celular,
-  // onde um viewBox largo encolheria os rótulos para uns 5px.
   const estreito = window.innerWidth < 700;
   const W = estreito ? 400 : 760;
-  const H = estreito ? 250 : 232;
+  const H = estreito ? 220 : 200;
   const padE = estreito ? 46 : 60, padD = estreito ? 8 : 16;
-  const padTopo = estreito ? 40 : 34, alturaEixo = 34;
+  const padTopo = estreito ? 30 : 26, alturaEixo = 34;
   const larguraPlot = W - padE - padD;
   const alturaPlot = H - padTopo - alturaEixo;
 
-  // Eixo em "antecedência": positivo = liberou antes do fim do prazo (sobe),
-  // negativo = passou do prazo (desce). Assim o lado bom é para cima.
-  const antecedencia = (x) => -x.delta;
-  const valores = serie.map(antecedencia);
-  const maxPos = Math.max(6, ...valores);
-  // Folga embaixo para o rótulo da barra mais funda não encostar no eixo
-  const maxNeg = Math.min(-6, ...valores) * 1.16;
-  const dominio = maxPos - maxNeg;
-  const y = (v) => padTopo + ((maxPos - v) / dominio) * alturaPlot;
-  const yZero = y(0);
+  const yZero = padTopo + alturaPlot / 2;
+  const altBarra = (alturaPlot / 2) - 10;
 
   const banda = larguraPlot / serie.length;
   const larguraBarra = Math.min(estreito ? 12 : 18, banda * 0.42);
@@ -407,61 +409,39 @@ function renderRitmo(model) {
   serie.forEach((item, i) => {
     const cx = padE + banda * i + banda / 2;
     const x = cx - larguraBarra / 2;
-    const v = antecedencia(item);
-    const atrasado = v < 0;          // abaixo da linha
-    const cor = atrasado ? COR_ATRASO : COR_PRAZO;
-    const paraCima = !atrasado;
-    const yTopo = paraCima ? y(v) : yZero;
-    const alt = Math.max(3, Math.abs(y(v) - yZero));
-    // Ponta arredondada no extremo do dado, reta na linha de base
+    const realizada = item.linha.reuniao === "Sim";
+    const cor = realizada ? COR_COM_REUNIAO : COR_SEM_REUNIAO;
+    const yTopo = realizada ? yZero - altBarra : yZero;
     const r = 4;
-    const d = paraCima
-      ? `M${x},${yTopo + alt} L${x},${yTopo + r} Q${x},${yTopo} ${x + r},${yTopo} L${x + larguraBarra - r},${yTopo} Q${x + larguraBarra},${yTopo} ${x + larguraBarra},${yTopo + r} L${x + larguraBarra},${yTopo + alt} Z`
-      : `M${x},${yZero} L${x},${yZero + alt - r} Q${x},${yZero + alt} ${x + r},${yZero + alt} L${x + larguraBarra - r},${yZero + alt} Q${x + larguraBarra},${yZero + alt} ${x + larguraBarra},${yZero + alt - r} L${x + larguraBarra},${yZero} Z`;
+    const d = realizada
+      ? `M${x},${yZero} L${x},${yTopo + r} Q${x},${yTopo} ${x + r},${yTopo} L${x + larguraBarra - r},${yTopo} Q${x + larguraBarra},${yTopo} ${x + larguraBarra},${yTopo + r} L${x + larguraBarra},${yZero} Z`
+      : `M${x},${yZero} L${x},${yZero + altBarra - r} Q${x},${yZero + altBarra} ${x + r},${yZero + altBarra} L${x + larguraBarra - r},${yZero + altBarra} Q${x + larguraBarra},${yZero + altBarra} ${x + larguraBarra},${yZero + altBarra - r} L${x + larguraBarra},${yZero} Z`;
     barras += `<path d="${d}" fill="${cor}"/>`;
 
-    // Rótulo direto apenas nos extremos (os atrasos mais longos)
-    if (atrasado && v === Math.min(...valores)) {
-      rotulos += `<text x="${cx}" y="${yZero + alt + 14}" class="rot-valor" text-anchor="middle">${Math.abs(v)}d</text>`;
-    }
-
-    // Número da semana no eixo
     rotulos += `<text x="${cx}" y="${H - 14}" class="rot-eixo" text-anchor="middle">${String(item.linha.semana).padStart(2, "0")}</text>`;
 
-    // Alvo de hover generoso
-    const titulo = `${item.linha.politica} · semana ${String(item.linha.semana).padStart(2, "0")} · liberado ${item.linha.inicio} · ${
-      atrasado ? `${v} dias depois do prazo` : `${Math.abs(v)} dias antes do fim do prazo`
+    const titulo = `${item.linha.politica} · semana ${String(item.linha.semana).padStart(2, "0")} · ${
+      realizada ? "reunião realizada" : "reunião ainda não realizada"
     }`;
     alvos += `<rect x="${padE + banda * i}" y="${padTopo}" width="${banda}" height="${alturaPlot}" fill="transparent" class="alvo-ritmo"><title>${titulo}</title></rect>`;
   });
 
-  // Marca da virada
-  let virada = "";
-  if (model.indiceVirada > 0) {
-    const xv = padE + banda * model.indiceVirada;
-    virada = `
-      <line x1="${xv}" y1="${padTopo - 8}" x2="${xv}" y2="${padTopo + alturaPlot}" class="linha-virada"/>
-      <text x="${estreito ? xv + 4 : xv + 6}" y="${padTopo - 12}" class="rot-virada">${
-        estreito ? "daqui em diante, no prazo" : "a partir daqui, no prazo"
-      }</text>`;
-  }
-
   secao.querySelector(".ritmo-svg").innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dias de cada liberação em relação ao fim da semana prevista, em ordem de semana">
-      ${virada}
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reunião realizada por política, em ordem de semana">
       <line x1="${padE}" y1="${yZero}" x2="${W - padD}" y2="${yZero}" class="linha-zero"/>
-      <text x="${padE - 8}" y="${yZero + 4}" class="rot-eixo" text-anchor="end">prazo</text>
-      <text x="${padE - 8}" y="${yZero - 14}" class="rot-direcao" text-anchor="end">no prazo ▲</text>
-      <text x="${padE - 8}" y="${yZero + 22}" class="rot-direcao" text-anchor="end">atrasado ▼</text>
+      <text x="${padE - 8}" y="${yZero + 4}" class="rot-eixo" text-anchor="end">reunião</text>
+      <text x="${padE - 8}" y="${yZero - altBarra + 6}" class="rot-direcao" text-anchor="end">realizada ▲</text>
+      <text x="${padE - 8}" y="${yZero + altBarra - 2}" class="rot-direcao" text-anchor="end">pendente ▼</text>
       ${barras}
       ${rotulos}
       ${alvos}
     </svg>`;
 
-  const atrasadasN = model.totalIniciadas - model.noPrazo;
   secao.querySelector(".ritmo-leitura").textContent =
-    `As ${atrasadasN} primeiras liberações passaram do prazo, com atraso médio de ${model.atrasoMedio} dias. ` +
-    `As ${model.sequenciaNoPrazo} últimas saíram dentro da semana prevista.`;
+    `${model.reunioesRealizadas} de ${serie.length} reuniões semanais já foram realizadas. ` +
+    (model.reunioesPendentes
+      ? `${model.reunioesPendentes} ainda ${model.reunioesPendentes === 1 ? "está pendente" : "estão pendentes"}.`
+      : "Todas em dia.");
 }
 
 /* Capivara na água, desenhada em SVG. Três estados:
@@ -516,6 +496,15 @@ function atrasoBadge(ad) {
   return `<span class="atraso-na">—</span>`;
 }
 
+/* Adesão ao treinamento (relatório externo, repassado manualmente).
+   Sem dado para a política ainda = traço. Abaixo de 20% = alerta (faixa baixa
+   observada no relatório de origem); acima, tom neutro. */
+function adesaoBadge(pct) {
+  if (pct === undefined || pct === null) return `<span class="atraso-na">—</span>`;
+  const cls = pct < 20 ? "adesao-baixa" : "adesao-ok";
+  return `<span class="${cls}">${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</span>`;
+}
+
 function marcoRow(semana, comRelatorio) {
   const div = document.createElement("div");
   div.className = "placar-marco";
@@ -549,7 +538,7 @@ window.addEventListener("resize", () => {
     const agora = window.innerWidth < 700;
     if (agora !== larguraAnterior && modeloAtual) {
       larguraAnterior = agora;
-      renderRitmo(modeloAtual);
+      renderReuniao(modeloAtual);
     }
   }, 150);
 });
