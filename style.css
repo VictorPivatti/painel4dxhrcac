@@ -587,17 +587,6 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .festa-agua { fill: #7fb8c9; opacity: .4; animation: festa-onda 5s ease-in-out infinite alternate; }
 .festa-agua2 { fill: #006078; opacity: .22; animation-duration: 6.5s; animation-direction: alternate-reverse; }
 @keyframes festa-onda { from { transform: translateY(0); } to { transform: translateY(2.5px); } }
-.peixe { fill: var(--gold); stroke: #a87700; stroke-width: .8; opacity: 0; transform: translate(var(--x), 60px); }
-.peixe-olho { fill: #3a2a00; stroke: none; }
-.festa.anim-play .peixe { animation: peixe-pula 2.2s cubic-bezier(.45,.05,.55,.95) var(--d) 3 both; }
-.festa-meta.anim-play .peixe { animation-iteration-count: infinite; }
-@keyframes peixe-pula {
-  0%   { transform: translate(var(--x), 62px) rotate(-55deg); opacity: 0; }
-  12%  { opacity: 1; }
-  50%  { transform: translate(calc(var(--x) + 20px), 14px) rotate(0deg); }
-  88%  { opacity: 1; }
-  100% { transform: translate(calc(var(--x) + 40px), 62px) rotate(55deg); opacity: 0; }
-}
 
 /* Ícones dos cartões */
 .mini-label { display: flex; align-items: center; gap: .4rem; }
@@ -684,4 +673,52 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .rio-corrente, .rio-capy, .rio-hoje { animation: none !important; }
   .rk-trilho i { transition: none !important; }
+}
+
+/* ==========================================================================
+   v14 · Água animada no topo e peixinhos redesenhados
+   ========================================================================== */
+/* Ondas: três camadas em velocidades diferentes; a da frente tem a cor do
+   fundo da página, então a foto "termina" numa margem de rio. */
+.hero-ondas { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 8.5rem; pointer-events: none; }
+.hero-onda { animation: onda-corre linear infinite; }
+.hero-onda-1 { fill: #7fb8c9; opacity: .35; animation-duration: 26s; }
+.hero-onda-2 { fill: #006078; opacity: .22; animation-duration: 19s; animation-direction: reverse; }
+.hero-onda-3 { fill: var(--background); animation-duration: 14s; }
+@keyframes onda-corre { from { transform: translateX(0); } to { transform: translateX(-1440px); } }
+
+/* Peixinhos: corpo com degradê, nadadeiras, guelra e brilho no olho.
+   O peixe aponta para a direita, no sentido do pulo; respingos e gotas
+   saem da água na partida e na chegada, no mesmo compasso do salto. */
+.peixe-voo .peixe { opacity: 0; transform: translate(var(--x), 58px); }
+.peixe-corpo { fill: url(#peixeGrad); stroke: #a86f00; stroke-width: .7; }
+.peixe-cauda, .peixe-nadadeira { fill: #f2a400; stroke: #a86f00; stroke-width: .6; stroke-linejoin: round; }
+.peixe-barriga { fill: #fff3c4; opacity: .85; }
+.peixe-guelra { fill: none; stroke: #b87a00; stroke-width: .7; stroke-linecap: round; opacity: .8; }
+.peixe-olho { fill: #2b1e00; }
+.peixe-brilho { fill: #fff; }
+.respingo { fill: none; stroke: #fff; stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.gotas circle { fill: #cfe8f0; opacity: 0; }
+.festa.anim-play .peixe       { animation: peixe-salto 2.6s cubic-bezier(.37,0,.63,1) var(--d) 3 both; }
+.festa.anim-play .respingo-sai   { animation: respingo-sai 2.6s ease-out var(--d) 3 both; }
+.festa.anim-play .respingo-entra { animation: respingo-entra 2.6s ease-out var(--d) 3 both; }
+.festa.anim-play .gotas-sai circle   { animation: gotas-sai 2.6s ease-out var(--d) 3 both; }
+.festa.anim-play .gotas-entra circle { animation: gotas-entra 2.6s ease-out var(--d) 3 both; }
+.festa-meta.anim-play .peixe, .festa-meta.anim-play .respingo, .festa-meta.anim-play .gotas circle { animation-iteration-count: infinite; }
+.gotas circle:nth-child(1) { --gx: -5px; } .gotas circle:nth-child(2) { --gx: 0px; } .gotas circle:nth-child(3) { --gx: 5px; }
+@keyframes peixe-salto {
+  0%   { transform: translate(var(--x), 60px) rotate(-62deg) scale(.85); opacity: 0; }
+  8%   { opacity: 1; }
+  25%  { transform: translate(calc(var(--x) + 11px), 30px) rotate(-38deg) scale(1); }
+  50%  { transform: translate(calc(var(--x) + 23px), 16px) rotate(0deg); }
+  75%  { transform: translate(calc(var(--x) + 35px), 30px) rotate(38deg) scale(1); }
+  92%  { opacity: 1; }
+  100% { transform: translate(calc(var(--x) + 46px), 60px) rotate(62deg) scale(.85); opacity: 0; }
+}
+@keyframes respingo-sai   { 0% { opacity: .9; transform: scale(.3); } 22% { opacity: 0; transform: scale(1.6); } 100% { opacity: 0; } }
+@keyframes respingo-entra { 0%, 86% { opacity: 0; transform: scale(.3); } 90% { opacity: .9; } 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes gotas-sai   { 0% { opacity: .95; transform: translate(0, 0); } 20% { opacity: 0; transform: translate(var(--gx), -9px); } 100% { opacity: 0; } }
+@keyframes gotas-entra { 0%, 87% { opacity: 0; transform: translate(0, 0); } 90% { opacity: .95; } 100% { opacity: 0; transform: translate(var(--gx), -9px); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-onda, .peixe, .respingo, .gotas circle { animation: none !important; }
 }
