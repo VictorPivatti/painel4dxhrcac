@@ -699,26 +699,25 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 .peixe-brilho { fill: #fff; }
 .respingo { fill: none; stroke: #fff; stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .gotas circle { fill: #cfe8f0; opacity: 0; }
-.festa.anim-play .peixe       { animation: peixe-salto 2.6s cubic-bezier(.37,0,.63,1) var(--d) 3 both; }
-.festa.anim-play .respingo-sai   { animation: respingo-sai 2.6s ease-out var(--d) 3 both; }
-.festa.anim-play .respingo-entra { animation: respingo-entra 2.6s ease-out var(--d) 3 both; }
-.festa.anim-play .gotas-sai circle   { animation: gotas-sai 2.6s ease-out var(--d) 3 both; }
-.festa.anim-play .gotas-entra circle { animation: gotas-entra 2.6s ease-out var(--d) 3 both; }
-.festa-meta.anim-play .peixe, .festa-meta.anim-play .respingo, .festa-meta.anim-play .gotas circle { animation-iteration-count: infinite; }
+.festa.anim-play .peixe       { animation: peixe-salto 6s cubic-bezier(.37,0,.63,1) var(--d) infinite both; }
+.festa.anim-play .respingo-sai   { animation: respingo-sai 6s ease-out var(--d) infinite both; }
+.festa.anim-play .respingo-entra { animation: respingo-entra 6s ease-out var(--d) infinite both; }
+.festa.anim-play .gotas-sai circle   { animation: gotas-sai 6s ease-out var(--d) infinite both; }
+.festa.anim-play .gotas-entra circle { animation: gotas-entra 6s ease-out var(--d) infinite both; }
 .gotas circle:nth-child(1) { --gx: -5px; } .gotas circle:nth-child(2) { --gx: 0px; } .gotas circle:nth-child(3) { --gx: 5px; }
 @keyframes peixe-salto {
-  0%   { transform: translate(var(--x), 60px) rotate(-62deg) scale(.85); opacity: 0; }
-  8%   { opacity: 1; }
-  25%  { transform: translate(calc(var(--x) + 11px), 30px) rotate(-38deg) scale(1); }
-  50%  { transform: translate(calc(var(--x) + 23px), 16px) rotate(0deg); }
-  75%  { transform: translate(calc(var(--x) + 35px), 30px) rotate(38deg) scale(1); }
-  92%  { opacity: 1; }
-  100% { transform: translate(calc(var(--x) + 46px), 60px) rotate(62deg) scale(.85); opacity: 0; }
+  0%    { transform: translate(var(--x), 60px) rotate(-62deg) scale(.85); opacity: 0; }
+  3.5%  { opacity: 1; }
+  10.8% { transform: translate(calc(var(--x) + 11px), 30px) rotate(-38deg) scale(1); }
+  21.7% { transform: translate(calc(var(--x) + 23px), 16px) rotate(0deg); }
+  32.5% { transform: translate(calc(var(--x) + 35px), 30px) rotate(38deg) scale(1); }
+  39.8% { opacity: 1; }
+  43.3%, 100% { transform: translate(calc(var(--x) + 46px), 60px) rotate(62deg) scale(.85); opacity: 0; }
 }
-@keyframes respingo-sai   { 0% { opacity: .9; transform: scale(.3); } 22% { opacity: 0; transform: scale(1.6); } 100% { opacity: 0; } }
-@keyframes respingo-entra { 0%, 86% { opacity: 0; transform: scale(.3); } 90% { opacity: .9; } 100% { opacity: 0; transform: scale(1.6); } }
-@keyframes gotas-sai   { 0% { opacity: .95; transform: translate(0, 0); } 20% { opacity: 0; transform: translate(var(--gx), -9px); } 100% { opacity: 0; } }
-@keyframes gotas-entra { 0%, 87% { opacity: 0; transform: translate(0, 0); } 90% { opacity: .95; } 100% { opacity: 0; transform: translate(var(--gx), -9px); } }
+@keyframes respingo-sai   { 0% { opacity: .9; transform: scale(.3); } 9.5%, 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes respingo-entra { 0%, 37.2% { opacity: 0; transform: scale(.3); } 39% { opacity: .9; } 43.3%, 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes gotas-sai   { 0% { opacity: .95; transform: translate(0, 0); } 8.7%, 100% { opacity: 0; transform: translate(var(--gx), -9px); } }
+@keyframes gotas-entra { 0%, 37.7% { opacity: 0; transform: translate(0, 0); } 39% { opacity: .95; } 43.3%, 100% { opacity: 0; transform: translate(var(--gx), -9px); } }
 @media (prefers-reduced-motion: reduce) {
   .hero-onda, .peixe, .respingo, .gotas circle { animation: none !important; }
 }
