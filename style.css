@@ -752,3 +752,11 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
 /* Itens de grid/flex não encolhem abaixo do conteúdo por padrão: libera para o rio rolar */
 .grid-top > *, .card-evolucao > *, .card-evolucao .flex1, .capy-rio, .capy-rio .rio-scroll { min-width: 0; }
 .card-head-icon > .flex1 { align-self: stretch; width: 100%; }
+
+/* v17 · "Estamos nos encontrando?" compacto, no fim do painel */
+#secao-reuniao { padding: 1.15rem 1.35rem; }
+#secao-reuniao h2 { font-size: 1.2rem; }
+#secao-reuniao .ritmo-head { margin-bottom: 0; }
+#secao-reuniao .ritmo-sub { margin-top: .2rem; font-size: .78rem; }
+#secao-reuniao .ritmo-svg { margin-top: .35rem; }
+#secao-reuniao .ritmo-leitura { margin-top: .4rem; font-size: .8rem; }

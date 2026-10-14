@@ -385,19 +385,22 @@ function renderReuniao(model) {
   }
   secao.hidden = false;
 
+  // Desenha na largura real do card (textos em px normais) e com altura baixa:
+  // o gráfico é só sim/não, não precisa de muito espaço vertical.
   const estreito = window.innerWidth < 700;
-  const W = estreito ? 400 : 760;
-  const H = estreito ? 220 : 200;
-  const padE = estreito ? 46 : 60, padD = estreito ? 8 : 16;
-  const padTopo = estreito ? 30 : 26, alturaEixo = 34;
+  const larguraCaixa = Math.round(secao.querySelector(".ritmo-svg").clientWidth || 760);
+  const W = estreito ? 400 : Math.max(600, larguraCaixa);
+  const H = estreito ? 118 : 118;
+  const padE = estreito ? 46 : 64, padD = estreito ? 8 : 12;
+  const padTopo = estreito ? 10 : 10, alturaEixo = 24;
   const larguraPlot = W - padE - padD;
   const alturaPlot = H - padTopo - alturaEixo;
 
   const yZero = padTopo + alturaPlot / 2;
-  const altBarra = (alturaPlot / 2) - 10;
+  const altBarra = (alturaPlot / 2) - 4;
 
   const banda = larguraPlot / serie.length;
-  const larguraBarra = Math.min(estreito ? 12 : 18, banda * 0.42);
+  const larguraBarra = Math.min(estreito ? 12 : 16, banda * 0.42);
 
   let barras = "";
   let rotulos = "";
@@ -417,7 +420,7 @@ function renderReuniao(model) {
     if (!realizada) barras += `<path d="${d}" fill="none" stroke="${cor}" stroke-width="2" class="halo-pendente"/>`;
     barras += `<path d="${d}" fill="${cor}" class="barra-reuniao ${realizada ? "barra-sim" : "barra-nao"}" style="--i:${i}"/>`;
 
-    rotulos += `<text x="${cx}" y="${H - 14}" class="rot-eixo" text-anchor="middle">${String(item.linha.semana).padStart(2, "0")}</text>`;
+    rotulos += `<text x="${cx}" y="${H - 8}" class="rot-eixo" text-anchor="middle">${String(item.linha.semana).padStart(2, "0")}</text>`;
 
     const titulo = `${item.linha.politica} · semana ${String(item.linha.semana).padStart(2, "0")} · ${
       realizada ? "reunião realizada" : "reunião ainda não realizada"
@@ -875,6 +878,7 @@ window.addEventListener("resize", () => {
     const caixa = document.querySelector("#secao-rio .rio-scroll");
     if (!caixa || !modeloAtual) return;
     if (Math.abs(caixa.clientWidth - larguraRio) > 8) { larguraRio = caixa.clientWidth; renderRio(modeloAtual); }
+    renderReuniao(modeloAtual);
   }, 200);
 });
 
