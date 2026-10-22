@@ -175,7 +175,8 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 'use strict';
-const APP_VERSION = '1.1 · 22/10/2026';
+const APP_VERSION = '1.2 · 22/10/2026';
+const MAX_PCT = 16;
 const FORM_VERSION = 'REG005SEG-v00/folha-v03.1';
 const STORE_KEY = 'rondaNQSP.v1';
 
@@ -297,8 +298,15 @@ function sortear(r){
   const dd=new Date(); r.sorteio={em:dd.getFullYear()+'-'+pad(dd.getMonth()+1)+'-'+pad(dd.getDate())+'T'+pad(dd.getHours())+':'+pad(dd.getMinutes()),base,N,sorteados:out.slice(0,Math.min(4,N)),reservas:out.slice(4),refeito:ref};
   return null;
 }
+function sortearMais(r,k){
+  const s=r.sorteio; if(!s) return 0;
+  const ja=new Set([...s.sorteados,...s.reservas]);
+  const pool=(s.base==='lista'?parseLista(r.leitosLista):Array.from({length:s.N},(_,i)=>String(i+1))).filter(x=>!ja.has(x));
+  let n=0; while(n<k&&pool.length){ s.sorteados.push(pool.splice(rand(pool.length),1)[0]); n++; }
+  s.extras=(s.extras||0)+n; return n;
+}
 function rotuloLeito(r,x){ return r.sorteio&&r.sorteio.base==='posicao'?x+'º ocupado':'Leito '+x; }
-function textoSorteio(r){ const s=r.sorteio; if(!s) return ''; return `${s.base==='lista'?'lista':'posição no censo'} N=${s.N} | sorteados: ${s.sorteados.join(', ')} | reservas: ${s.reservas.join(', ')||'-'} | refeito ${s.refeito}x | ${s.em.slice(0,16).replace('T',' ')}`; }
+function textoSorteio(r){ const s=r.sorteio; if(!s) return ''; return `${s.base==='lista'?'lista':'posição no censo'} N=${s.N} | sorteados: ${s.sorteados.join(', ')} | reservas: ${s.reservas.join(', ')||'-'} | extras ${s.extras||0} | refeito ${s.refeito}x | ${s.em.slice(0,16).replace('T',' ')}`; }
 function origemAuto(r,p){
   if(!r.sorteio||r.sorteio.base!=='lista'||!p.leito.trim()) return;
   if(p.origem&&!p.origemAuto) return;
@@ -420,7 +428,7 @@ function renderRonda(r){
     ...r.pacientes.map((p,i)=>{const q=pendPct(p);const feito=ITENS.length-q.vaz.length;return ['p'+i,p.pos+(p.leito?' · L'+p.leito:''),feito+'/'+ITENS.length];}),
     ['fim','Fechamento',pendRonda(r).length+' pend.']];
   let html=`<nav class="tabs" role="tablist">${tabs.map(t=>`<button role="tab" data-aba="${t[0]}" aria-selected="${view.aba===t[0]}">${esc(t[1])}<small>${esc(t[2])}</small></button>`).join('')}
-    ${r.pacientes.length<4?'<button id="addP" aria-selected="false">+ Paciente<small>até 4 por folha</small></button>':''}</nav>`;
+    ${r.pacientes.length<MAX_PCT?`<button id="addP" aria-selected="false">+ Paciente<small>${r.pacientes.length<4?'folha 1 (até 4)':'folha '+(Math.floor(r.pacientes.length/4)+1)+' do REG 005'}</small></button>`:''}</nav>`;
   if(view.aba==='cab') html+=htmlCab(r);
   else if(view.aba==='fim') html+=htmlFim(r);
   else { const i=+view.aba.slice(1); html+=htmlPct(r,r.pacientes[i],i); }
@@ -459,7 +467,7 @@ function htmlCab(r){
       <p style="margin:0;font-size:13px;color:var(--muted)">Com a lista, o app sorteia os leitos. Só com o número de leitos ocupados, sorteia posições na ordem do censo (ex.: 3º ocupado). Sorteia 4 e mais 2 reservas, para quando um paciente não puder ser avaliado.</p>
       ${r.sorteio?`<div class="chips">${r.sorteio.sorteados.map(x=>`<span class="chip${r.pacientes.some(p=>p.leito.trim()===x)?' usado':''}">${esc(rotuloLeito(r,x))}</span>`).join('')}${r.sorteio.reservas.map(x=>`<span class="chip res">reserva: ${esc(rotuloLeito(r,x))}</span>`).join('')}</div>
         <p style="margin:0;font-size:12px;color:var(--muted)">Sorteado em ${esc(r.sorteio.em.slice(11,16))}${r.sorteio.refeito?` · refeito ${r.sorteio.refeito} vez(es), fica registrado na exportação`:''}</p>`:''}
-      <div class="btns"><button class="btn${r.sorteio?'':' primary'}" id="btnSort">${r.sorteio?'Refazer sorteio':'Sortear 4 + 2 reservas'}</button></div>
+      <div class="btns"><button class="btn${r.sorteio?'':' primary'}" id="btnSort">${r.sorteio?'Refazer sorteio':'Sortear 4 + 2 reservas'}</button>${r.sorteio?'<button class="btn" id="btnMais">Sortear mais 4 (amostra extra)</button>':''}</div>
     </section>
     <div class="btns"><button class="btn primary" data-goto="p0">Começar pelo P1</button></div>`;
 }
@@ -489,7 +497,7 @@ function htmlPct(r,p,i){
     <div class="item"><div class="txt"><span class="cod">OBS</span>Observações do paciente</div><div></div>
       <div class="extra"><input id="p_obs" value="${esc(p.obsPct)}"></div></div></div>`;
   const nav=`<div class="btns noprint">${i>0?`<button class="btn" data-goto="p${i-1}">‹ ${r.pacientes[i-1].pos}</button>`:''}
-    ${i<r.pacientes.length-1?`<button class="btn primary" data-goto="p${i+1}">${r.pacientes[i+1].pos} ›</button>`:(r.pacientes.length<4?'<button class="btn primary" id="addP2">+ Próximo paciente</button>':'')}
+    ${i<r.pacientes.length-1?`<button class="btn primary" data-goto="p${i+1}">${r.pacientes[i+1].pos} ›</button>`:(r.pacientes.length<MAX_PCT?'<button class="btn primary" id="addP2">+ Próximo paciente</button>':'')}
     <button class="btn" data-goto="fim">Fechamento</button>
     <button class="btn danger" id="delP">Remover ${p.pos}</button></div>`;
   return pre+blocos+ev+nav;
@@ -531,20 +539,23 @@ function htmlFim(r){
 }
 
 function renderReg(r){
-  const cols=r.pacientes.slice(0,4); while(cols.length<4) cols.push(null);
-  const val=(p,cod)=>{ if(!p) return ''; if(cod==='M3.4'){ if(db.cfg.m34==='p1'&&p!==r.pacientes[0]) return ''; return r.m34==='NV'?'NA':(r.m34||''); } const v=p.v[cod]||''; return v==='NV'?'NA':v; };
+  const nF=Math.max(1,Math.ceil(r.pacientes.length/4)); const fol0=parseInt(r.folha,10);
+  const val=(p,cod,j)=>{ if(!p) return ''; if(cod==='M3.4'){ if(db.cfg.m34==='p1'&&j!==0) return ''; return r.m34==='NV'?'NA':(r.m34||''); } const v=p.v[cod]||''; return v==='NV'?'NA':v; };
   const txt=cod=>cod==='M3.4'?ITEM_SETOR[1]:ITENS.find(i=>i.cod===cod).txt;
   const meta=cod=>({M1:'META 1',M2:'META 2',M3:'META 3',LP:'META 6 (LPP)',QD:'META 6 (QUEDA)'})[cod.slice(0,2)];
+  let folhas='';
+  for(let f=0;f<nF;f++){
+  const cols=r.pacientes.slice(f*4,f*4+4); while(cols.length<4) cols.push(null);
   let last='', rows='';
   ORDEM_REG.forEach(cod=>{ const m=meta(cod); if(m!==last){ rows+=`<tr><td class="meta" colspan="6">${m}</td></tr>`; last=m; }
-    const vs=cols.map(p=>val(p,cod)); const c=vs.filter(x=>x==='C').length,n=vs.filter(x=>x==='NC').length,a=vs.filter(x=>x==='NA').length;
+    const vs=cols.map((p,j)=>val(p,cod,j)); const c=vs.filter(x=>x==='C').length,n=vs.filter(x=>x==='NC').length,a=vs.filter(x=>x==='NA').length;
     rows+=`<tr><td>${esc(txt(cod))}</td>${vs.map(x=>`<td class="v">${x}</td>`).join('')}<td class="tot">C ${c} · NC ${n} · NA ${a}</td></tr>`; });
-  $('#app').innerHTML=`<div class="btns noprint"><button class="btn" id="voltar">‹ Voltar à ronda</button><button class="btn primary" id="imprimir">Imprimir / salvar PDF</button></div>
-    <div class="reg">
-      <div class="hdr"><span><b>REG 005 SEG</b> · transcrição da ronda ${esc(r.id)}</span><span><b>Data:</b> ${brData(r.data)}</span><span><b>Setor:</b> ${esc(r.setor)}</span><span><b>Unidade:</b> ${esc(r.unidade)}</span><span><b>Avaliador:</b> ${esc(r.rondista)}</span><span><b>Folha nº:</b> ${esc(r.folha)}</span></div>
-      <table><thead><tr><th>Item</th>${cols.map((p,i)=>`<th>P${i+1}${p?`<br><span style="font-weight:400">Atend. ${esc(p.atend)}${p.leito?' · L'+esc(p.leito):''}</span>`:''}</th>`).join('')}<th>TOTAL</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="nota">NV da base vira NA no formulário (não altera a conformidade C ÷ (C + NC)). M3.4: ${db.cfg.m34==='p1'?'registrado só em P1':'repetido nas colunas dos pacientes'} (decisão D3 pendente). Conformidade do item = C ÷ (C + NC); não dividir C pelo TOTAL.</p>
-    </div>`;
+  folhas+=`<div class="reg"${f?' style="break-before:page;page-break-before:always;margin-top:16px"':''}>
+      <div class="hdr"><span><b>REG 005 SEG</b> · ronda ${esc(r.id)} · folha ${f+1} de ${nF}</span><span><b>Data:</b> ${brData(r.data)}</span><span><b>Setor:</b> ${esc(r.setor)}</span><span><b>Unidade:</b> ${esc(r.unidade)}</span><span><b>Avaliador:</b> ${esc(r.rondista)}</span><span><b>Folha nº:</b> ${isNaN(fol0)?esc(r.folha)+(f?' +'+f:''):fol0+f}</span></div>
+      <table><thead><tr><th>Item</th>${cols.map((p,i)=>`<th>${p?esc(p.pos):'P'+(f*4+i+1)}${p?`<br><span style="font-weight:400">Atend. ${esc(p.atend)}${p.leito?' · L'+esc(p.leito):''}</span>`:''}</th>`).join('')}<th>TOTAL</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="nota">NV da base vira NA no formulário (não altera a conformidade C ÷ (C + NC)). M3.4: ${db.cfg.m34==='p1'?'registrado só na 1ª coluna de cada folha':'repetido nas colunas dos pacientes'} (decisão D3 pendente). Conformidade do item = C ÷ (C + NC); não dividir C pelo TOTAL.</p>
+    </div>`; }
+  $('#app').innerHTML=`<div class="btns noprint"><button class="btn" id="voltar">‹ Voltar à ronda</button><button class="btn primary" id="imprimir">Imprimir / salvar PDF</button></div>${folhas}`;
   $('#bottom').hidden=true;
   $('#voltar').onclick=()=>{view.tela='ronda';view.aba='fim';render();};
   $('#imprimir').onclick=()=>{ try{ window.print(); }catch(e){ toast('Impressão indisponível neste navegador.'); } };
@@ -554,13 +565,15 @@ function renderReg(r){
 function bindRonda(r){
   document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.aba;render();window.scrollTo(0,0);});
   document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.goto;render();window.scrollTo(0,0);});
-  const add=()=>{ if(r.pacientes.length>=4) return; const np=novoPct(r.pacientes.length+1); const ps=proxSorteado(r); if(ps){np.leito=ps;np.origem='S';np.origemAuto=true;} r.pacientes.push(np); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
+  const add=()=>{ if(r.pacientes.length>=MAX_PCT) return; const np=novoPct(r.pacientes.length+1); let ps=proxSorteado(r);
+    if(!ps&&r.sorteio&&r.pacientes.length>=r.sorteio.sorteados.length){ if(sortearMais(r,4)){ ps=proxSorteado(r); toast('Sorteados mais leitos para a amostra extra.'); } else if(r.sorteio) toast('Todos os leitos ocupados já foram sorteados.'); } if(ps){np.leito=ps;np.origem='S';np.origemAuto=true;} r.pacientes.push(np); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
   if($('#addP')) $('#addP').onclick=add; if($('#addP2')) $('#addP2').onclick=add;
   const inp=(id,fn)=>{ const el=$(id); if(el) el.addEventListener('input',e=>{fn(e.target.value);toque(r);save();}); };
   if(view.aba==='cab'){
     inp('#f_setor',v=>r.setor=v); inp('#f_data',v=>r.data=v); inp('#f_hIni',v=>r.hIni=v); inp('#f_hFim',v=>r.hFim=v);
     inp('#f_leitos',v=>r.leitos=v); inp('#f_folha',v=>r.folha=v); inp('#f_resp',v=>r.resp=v); inp('#f_rondista',v=>r.rondista=v);
     inp('#f_lista',v=>r.leitosLista=v);
+    if($('#btnMais')) $('#btnMais').onclick=()=>{ const n=sortearMais(r,4); if(!n){toast('Não há mais leitos ocupados para sortear.');return;} toque(r); save(true); render(); toast(n+' leito(s) a mais sorteado(s).'); };
     $('#btnSort').onclick=()=>{ const go=()=>{ const e=sortear(r); if(e){toast(e);return;} r.pacientes.forEach(p=>{ if(p.origemAuto){p.origem='';p.origemAuto=false;} origemAuto(r,p); }); if(r.pacientes.length===1&&!r.pacientes[0].leito){ const ps=proxSorteado(r); if(ps){r.pacientes[0].leito=ps;r.pacientes[0].origem='S';r.pacientes[0].origemAuto=true;} } toque(r); save(true); render(); };
       if(r.sorteio) confirmar('Refazer o sorteio? O sorteio anterior é substituído e a exportação registra quantas vezes foi refeito.','Refazer',go); else go(); };
     inp('#f_m34mot',v=>{r.m34motivo=v; $('#f_m34mot').classList.toggle('req',r.m34==='NV'&&!v.trim());});
