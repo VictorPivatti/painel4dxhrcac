@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ronda NQSP</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ronda NQSP">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f5a5c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+/* Layout: barra fixa no topo, conteúdo em coluna única larga (iPad retrato/paisagem), linhas de item com botões grandes */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18211f; --muted:#5d6b67; --line:#d5ddda;
+  --accent:#0f5a5c; --accent-ink:#ffffff; --accent-soft:#e1eeed;
+  --c:#1f7a46; --c-soft:#dcf1e4; --nc:#b3261e; --nc-soft:#f8dedb;
+  --na:#5d6b67; --na-soft:#e7ebea; --nv:#9a6400; --nv-soft:#fbecd0;
+  --warn:#9a6400; --warn-soft:#fff4dc;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:10px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111716; --surface:#1a2221; --ink:#e6ecea; --muted:#9aa8a4; --line:#2e3a38;
+    --accent:#4fb3b0; --accent-ink:#0c1514; --accent-soft:#1d3433;
+    --c:#5cc98a; --c-soft:#183324; --nc:#ff8a80; --nc-soft:#3d1d1a;
+    --na:#a7b3b0; --na-soft:#262f2e; --nv:#f0b54a; --nv-soft:#3a2d12;
+    --warn:#f0b54a; --warn-soft:#332810; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#111716; --surface:#1a2221; --ink:#e6ecea; --muted:#9aa8a4; --line:#2e3a38;
+    --accent:#4fb3b0; --accent-ink:#0c1514; --accent-soft:#1d3433;
+    --c:#5cc98a; --c-soft:#183324; --nc:#ff8a80; --nc-soft:#3d1d1a;
+    --na:#a7b3b0; --na-soft:#262f2e; --nv:#f0b54a; --nv-soft:#3a2d12;
+    --warn:#f0b54a; --warn-soft:#332810; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--font);-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:0;z-index:20;background:var(--accent);color:var(--accent-ink);
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;gap:12px}
+.top h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sub{font-size:12px;opacity:.85;font-weight:400}
+.top button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:8px;padding:8px 12px;font-size:15px}
+.wrap{max-width:980px;margin:0 auto;padding-block:16px 120px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:16px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0;font-weight:650}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;flex:1 1 180px;min-width:0}
+.field label{font-size:13px;color:var(--muted)}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%}
+textarea{resize:vertical;min-height:80px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 16px;min-height:44px;font-weight:550}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--nc);border-color:var(--nc)}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--surface);padding:10px 14px;min-width:48px;min-height:44px;border-right:1px solid var(--line);font-weight:600}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.banner{border-radius:var(--r);padding:12px 16px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--warn)}
+.banner.ok{background:var(--c-soft);border-color:var(--c)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.rcard{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;text-align:left;width:100%}
+.rcard .t{font-weight:650}
+.rcard .m{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:650;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.pill.and{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--c-soft);color:var(--c)}
+.pill.exp{background:var(--na-soft);color:var(--na)}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:15;background:var(--bg);padding-block:8px;margin-top:-8px}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;min-height:44px;font-weight:600;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.tabs button small{font-weight:500;font-size:11px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button[aria-selected="true"] small{color:inherit;opacity:.85}
+
+.bloco{display:flex;flex-direction:column}
+.bloco>h3{margin:0;padding:10px 16px;font-size:14px;font-weight:700;background:var(--accent-soft);color:var(--ink);border-radius:var(--r) var(--r) 0 0;border:1px solid var(--line);border-bottom:0}
+.item{background:var(--surface);border:1px solid var(--line);border-top:0;padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+.bloco .item:last-child{border-radius:0 0 var(--r) var(--r)}
+.item .txt{min-width:0}
+.item .cod{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);margin-right:6px}
+.item .fonte{font-size:11px;font-weight:650;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:6px;white-space:nowrap}
+.item .auto{font-size:11px;font-weight:650;color:var(--nv);margin-left:6px}
+.item .crit{grid-column:1/-1;font-size:13px;color:var(--muted);background:var(--bg);border-radius:6px;padding:8px 10px}
+.item .extra{grid-column:1/-1}
+.item .extra input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:40px}
+.item .extra input.req{border-color:var(--nv);background:var(--nv-soft)}
+.info{border:0;background:transparent;color:var(--muted);font-size:13px;text-decoration:underline;padding:4px 0 0;display:block}
+.marks{display:flex;gap:6px}
+.marks button{min-width:54px;min-height:48px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:15px}
+.marks button[data-v="C"][aria-pressed="true"]{background:var(--c-soft);border-color:var(--c);color:var(--c)}
+.marks button[data-v="NC"][aria-pressed="true"]{background:var(--nc-soft);border-color:var(--nc);color:var(--nc)}
+.marks button[data-v="NA"][aria-pressed="true"]{background:var(--na-soft);border-color:var(--na);color:var(--na)}
+.marks button[data-v="NV"][aria-pressed="true"]{background:var(--nv-soft);border-color:var(--nv);color:var(--nv)}
+.marks button[data-v="S"][aria-pressed="true"],.marks button[data-v="INT"][aria-pressed="true"],.marks button[data-v="SR"][aria-pressed="true"],.marks button[data-v="ADM"][aria-pressed="true"]{background:var(--nc-soft);border-color:var(--nc);color:var(--nc)}
+.marks button[data-v="N"][aria-pressed="true"]{background:var(--c-soft);border-color:var(--c);color:var(--c)}
+.item.vazio{box-shadow:inset 4px 0 0 var(--warn)}
+
+.pend{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.pend li{padding:8px 12px;border-radius:8px;background:var(--warn-soft);font-size:14px}
+.pend li.ok{background:var(--c-soft)}
+
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;gap:8px;justify-content:space-between;align-items:center}
+.bottom .st{font-size:13px;color:var(--muted)}
+
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:var(--surface);border-radius:var(--r);padding:20px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:14px}
+.modal p{margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:60;font-size:14px;max-width:90vw}
+
+/* Visão REG 005 */
+.reg{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:16px;overflow-x:auto}
+.reg table{border-collapse:collapse;width:100%;min-width:720px;font-size:12px}
+.reg th,.reg td{border:1px solid #888;padding:4px 6px;vertical-align:middle}
+.reg th{background:#e9eeed}
+.reg td.v{text-align:center;font-weight:700;width:64px}
+.reg td.tot{text-align:center;white-space:nowrap;width:120px;font-variant-numeric:tabular-nums}
+.reg .meta{background:#d9e4e3;font-weight:700}
+.reg .hdr{display:flex;flex-wrap:wrap;gap:6px 24px;margin-bottom:10px;font-size:13px}
+.reg .nota{font-size:11px;color:#444;margin-top:8px}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body{background:#fff}
+  .top,.tabs,.bottom,.noprint{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .reg{border:0;padding:0;overflow:visible}
+  .reg table{min-width:0}
+}
+@media (max-width:640px){
+  .item{grid-template-columns:1fr}
+  .marks button{flex:1}
+  .marks{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="ttl">Ronda NQSP <span class="sub" id="ttlsub"></span></h1>
+  <button id="btnHome" hidden>Rondas</button>
+</header>
+<main class="wrap" id="app"></main>
+<div class="bottom" id="bottom" hidden></div>
+
+<script>
+'use strict';
+const APP_VERSION = '1.0 · 22/10/2026';
+const FORM_VERSION = 'REG005SEG-v00/folha-v03.1';
+const STORE_KEY = 'rondaNQSP.v1';
+
+/* ---------- Instrumento: espelha a folha de campo v03.1 (REG 005 SEG v00), mesma ordem ---------- */
+const BLOCOS = [
+ {nome:'Meta 1 - Identificação do paciente', itens:[
+  ['M1.1','Identificadores na placa beira-leito corretos (conferem com prontuário) e legíveis','OD+PR','C: placa presente, legível e conferindo com o prontuário. NC: ausente, ilegível ou divergente. Nunca dar C sem conferir com o prontuário.'],
+  ['M1.2','Nome completo e data de nascimento em todas as formas de identificação no leito','OD','C: os dois identificadores em placa, pulseira e demais identificações. Nome abreviado = NC.'],
+  ['M1.3','Paciente com pulseira de identificação','OD','C: pulseira no membro do paciente. NC: ausente, guardada ou presa à cama.'],
+  ['M1.4','Identificadores da pulseira corretos e legíveis (se M1.3 = C)','OD+PR','Se M1.3 = NC, marcar NA (D1). Composto: correto e legível.'],
+  ['M1.5','Paciente/cuidador afirma ter recebido orientação sobre o propósito da pulseira','EN','Pergunta aberta: "para que serve essa pulseira?". NA se não responde e não há acompanhante.'],
+  ['M1.6','Equipe realiza o rito de conferência da identificação durante o cuidado (só se observado)','OD','Sem ato de cuidado observado = NV. Não substituir observação por pergunta à equipe.'],
+  ['M1.7','Paciente/cuidador afirma que a pulseira é conferida antes de cada procedimento','EN','NA se não responde e não há acompanhante.']
+ ]},
+ {nome:'Meta 2 - Comunicação efetiva', itens:[
+  ['M2.1','Paciente/acompanhante ciente do quadro, diagnóstico, plano de cuidado e previsão de alta (os 4)','EN','Composto de 4 elementos: C só com os quatro. "O que o senhor entendeu do tratamento e de quando vai para casa?"'],
+  ['M2.2','Evidência de preenchimento da transição de cuidados (se houve transição)','PR','Elegível se houve transição. [A CONFIRMAR] instrumento institucional.'],
+  ['M2.3','Registro de SBAR na passagem de plantão','PR','[A CONFIRMAR] onde o SBAR é registrado (prontuário ou passômetro).'],
+  ['M2.4','Resultado crítico comunicado e documentado dentro do tempo acordado (se houve)','PR','Composto: comunicado, documentado e no prazo. NA se não houve resultado crítico na janela.'],
+  ['M2.5','Registro de recebimento do resultado crítico (se houve)','PR','Mesma elegibilidade do M2.4.'],
+  ['M2.6','Registro de conduta após o resultado crítico (se houve)','PR','Mesma elegibilidade do M2.4.']
+ ]},
+ {nome:'Meta 3 - Medicamentos', itens:[
+  ['M3.1','Medicações em uso identificadas com o nome (nada instalado = NV)','OD','C: tudo instalado ou preparado à beira-leito identificado. NV: prescrição sem nada instalado no momento. NA: sem medicação prescrita.'],
+  ['M3.2','MAV prescrito com dupla checagem (se MAV)','PR+OD','Elegível se há MAV prescrito. Sem padrão de registro da dupla checagem: NV com motivo.'],
+  ['M3.3','Administração no horário prescrito e aprazado','PR','Comparar checagem com aprazamento nas últimas 24h. Procurar checagem antecipada.'],
+  ['M3.5','Paciente/cuidador afirma receber informação sobre o medicamento antes da administração','EN','NA se não responde e não há acompanhante.']
+ ]},
+ {nome:'Meta 6 - Lesão por pressão', itens:[
+  ['LP.1','Risco de LP avaliado pela Braden na admissão','PR','C: escala com escore no registro de admissão.'],
+  ['LP.2','Avaliação da pele na admissão registrada em prontuário','PR','C: descrição da pele no registro de admissão.'],
+  ['LP.3','Braden reavaliada nas últimas 24h','PR','C: escala registrada nas últimas 24h.'],
+  ['LP.4','Risco de LP sinalizado na pulseira e na identificação do leito (se RB = M ou A)','OD+PR','NA se risco baixo. Sem Braden: NV (D2). Composto: pulseira e leito.'],
+  ['LP.5','Prescrição de enfermagem ajustada ao risco de LP (se RB avaliado)','PR','Sem Braden registrado: NV (D2).'],
+  ['LP.6','Mudança de decúbito conforme prescrição e relógio de LP (se RB = A)','OD+PR','Só risco alto. NA se deambula ou risco baixo/moderado.'],
+  ['LP.7','Paciente em uso de colchão indicado','OD','Ao marcar NC, anotar se é falta do recurso ou conduta. [A CONFIRMAR] critério de indicação.'],
+  ['LP.8','Registro de orientação ao paciente/acompanhante sobre prevenção de LP','PR','[A CONFIRMAR] se exigido para todos ou só para quem tem risco.'],
+  ['LP.9','Paciente/cuidador afirma ter sido orientado sobre prevenção de LP','EN','NA se não responde e não há acompanhante.']
+ ]},
+ {nome:'Meta 6 - Queda', itens:[
+  ['QD.1','Risco de queda avaliado na admissão (Morse adulto / Humpty Dumpty pediatria)','PR','Escala de adulto aplicada em criança = NC.'],
+  ['QD.2','Risco de queda reavaliado nas últimas 24h','PR','C: escala registrada nas últimas 24h.'],
+  ['QD.3','Risco de queda sinalizado na pulseira e na identificação do leito (se RQ = M ou A)','OD+PR','NA se risco baixo. Sem escala: NV (D2).'],
+  ['QD.4','Prescrição de enfermagem ajustada ao risco de queda (se RQ avaliado)','PR','Sem escala registrada: NV (D2).'],
+  ['QD.5','Grades funcionantes e mantidas elevadas','OD','NC: abaixadas, quebradas ou ausentes. Anotar se é equipamento ou conduta.'],
+  ['QD.6','Paciente/cuidador afirma ter sido orientado sobre prevenção de queda','EN','NA se não responde e não há acompanhante.'],
+  ['QD.7','Registro de orientação sobre prevenção de queda','PR','[A CONFIRMAR] se exigido para todos ou só para quem tem risco.']
+ ]}
+];
+const ITEM_SETOR = ['M3.4','Controlados (Portaria 344/98) em local trancado, chave com o enfermeiro','SE'];
+const ITENS = BLOCOS.flatMap(b=>b.itens.map(i=>({cod:i[0],txt:i[1],fonte:i[2],crit:i[3],bloco:b.nome})));
+const ORDEM_REG = [...BLOCOS[0].itens.map(i=>i[0]),...BLOCOS[1].itens.map(i=>i[0]),'M3.1','M3.2','M3.3','M3.4','M3.5',...BLOCOS[3].itens.map(i=>i[0]),...BLOCOS[4].itens.map(i=>i[0])];
+const EN_ITENS = ['M1.5','M1.7','M2.1','M3.5','LP.9','QD.6'];
+const SETORES = ['Clínica Médica','Clínica Cirúrgica','Clínica Ortopédica','Clínica Oncológica','UTI Adulto 1','UTI Adulto 2','Trauma e Emergência','Box de Emergência'];
+const EVENTOS = [
+  ['EV.1','Lesão por pressão presente',['N','ADM','INT','SR'],'N = não · ADM = já registrada na admissão · INT = adquirida na internação · SR = sem registro de origem'],
+  ['EV.2','Flebite ou sinal de infecção no sítio do cateter',['N','S','NA'],''],
+  ['EV.3','Erro de medicação identificado (prescrição, dispensação ou administração)',['N','S'],''],
+  ['EV.4','Outro evento',['N','S'],'']
+];
+
+/* ---------- Estado e armazenamento ---------- */
+let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir'}};
+let view = {tela:'home', id:null, aba:'cab', crit:{}};
+function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); } }catch(e){ console.warn('load',e); } }
+let saveT=null, saveOk=true;
+function save(now){ clearTimeout(saveT); const f=()=>{ try{ localStorage.setItem(STORE_KEY,JSON.stringify(db)); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now) f(); else saveT=setTimeout(f,250); }
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+const agora=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());};
+const brData=s=>s?s.split('-').reverse().join('/'):'';
+const ronda=()=>db.rondas.find(r=>r.id===view.id);
+
+function novaRonda(){
+  const d=new Date();
+  const id='R'+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+  const turno=d.getHours()<13?'M':(d.getHours()<19?'T':'N');
+  const r={id,versao:FORM_VERSION,unidade:'I',setor:'',data:hoje(),turno,hIni:agora(),hFim:'',leitos:'',folha:'',resp:'',rondista:db.cfg.rondista,
+    m34:'',m34motivo:'',pacientes:[novoPct(1)],encaminhamentos:'',obs:'',status:'andamento',exportada:false,criada:d.toISOString(),alterada:d.toISOString()};
+  db.rondas.unshift(r); save(true); view={tela:'ronda',id,aba:'cab',crit:{}}; render();
+}
+function novoPct(n){ return {pos:'P'+n,leito:'',atend:'',RB:'',RQ:'',EN:'',v:{},mot:{},obs:{},auto:{},ev:{'EV.1':'','EV.2':'','EV.3':'','EV.4':''},ev4desc:'',not:'',obsPct:''}; }
+function toque(r){ r.alterada=new Date().toISOString(); r.exportada=false; }
+
+/* ---------- Regras automáticas (D1, D2, entrevista) ---------- */
+function sugestao(p,cod){
+  if(EN_ITENS.includes(cod) && p.EN==='N') return ['NA','sem condição de responder e sem acompanhante'];
+  if(cod==='M1.4' && p.v['M1.3']==='NC') return ['NA','sem pulseira (M1.3 = NC), D1'];
+  if(cod==='LP.4'){ if(p.RB==='B') return ['NA','risco baixo']; if(p.RB==='NV') return ['NV','Braden não registrado (D2)']; }
+  if(cod==='LP.5' && p.RB==='NV') return ['NV','Braden não registrado (D2)'];
+  if(cod==='LP.6'){ if(p.RB==='B'||p.RB==='M') return ['NA','risco não alto']; if(p.RB==='NV') return ['NV','Braden não registrado (D2)']; }
+  if(cod==='QD.3'){ if(p.RQ==='B') return ['NA','risco baixo']; if(p.RQ==='NV') return ['NV','escala de queda não registrada (D2)']; }
+  if(cod==='QD.4' && p.RQ==='NV') return ['NV','escala de queda não registrada (D2)'];
+  return null;
+}
+function aplicarAuto(p){
+  ITENS.forEach(({cod})=>{
+    const s=sugestao(p,cod);
+    const forte = s && (cod==='M1.4' || EN_ITENS.includes(cod)) && s[0]==='NA';
+    if(s){ if(!p.v[cod]||p.auto[cod]||forte){ p.v[cod]=s[0]; p.auto[cod]=true; if(s[0]==='NV') p.mot[cod]=s[1]; else delete p.mot[cod]; p.obs[cod]=s[0]==='NA'?s[1]:(p.obs[cod]||''); } }
+    else if(p.auto[cod]){ delete p.v[cod]; delete p.auto[cod]; delete p.mot[cod]; delete p.obs[cod]; }
+  });
+}
+
+/* ---------- Pendências ---------- */
+function pendPct(p){
+  const vaz=ITENS.filter(i=>!p.v[i.cod]).map(i=>i.cod);
+  const nvSem=ITENS.filter(i=>p.v[i.cod]==='NV'&&!(p.mot[i.cod]||'').trim()).map(i=>i.cod);
+  const pre=['RB','RQ','EN'].filter(k=>!p[k]);
+  const evSem=Object.keys(p.ev).filter(k=>!p.ev[k]);
+  const evAchado=['EV.1','EV.2','EV.3','EV.4'].some(k=>['S','INT','SR'].includes(p.ev[k]));
+  return {vaz,nvSem,pre,evSem,notFalta:evAchado&&!p.not.trim(),ev4Falta:p.ev['EV.4']==='S'&&!p.ev4desc.trim(),semAtend:!p.atend.trim()};
+}
+function pendRonda(r){
+  const L=[];
+  if(!r.setor) L.push('Setor não informado');
+  if(!r.leitos) L.push('Leitos ocupados não informado');
+  if(!r.m34) L.push('M3.4 (controlados, item de setor) não marcado');
+  if(r.m34==='NV'&&!r.m34motivo.trim()) L.push('M3.4 = NV sem motivo');
+  if(!r.hFim) L.push('Hora de fim não registrada');
+  r.pacientes.forEach(p=>{ const q=pendPct(p);
+    if(q.semAtend) L.push(p.pos+': nº de atendimento em branco');
+    if(q.pre.length) L.push(p.pos+': '+q.pre.join(', ')+' em branco');
+    if(q.vaz.length) L.push(p.pos+': '+q.vaz.length+' item(ns) em branco ('+q.vaz.join(', ')+')');
+    if(q.nvSem.length) L.push(p.pos+': NV sem motivo em '+q.nvSem.join(', '));
+    if(q.evSem.length) L.push(p.pos+': eventos não marcados ('+q.evSem.join(', ')+')');
+    if(q.notFalta) L.push(p.pos+': evento encontrado sem nº de notificação do Interact');
+    if(q.ev4Falta) L.push(p.pos+': EV.4 sem descrição');
+  });
+  return L;
+}
+
+/* ---------- Render ---------- */
+function render(){
+  $('#btnHome').hidden = view.tela==='home';
+  if(view.tela==='home') return renderHome();
+  const r=ronda(); if(!r){ view={tela:'home'}; return renderHome(); }
+  $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' ';
+  $('#ttlsub').textContent=brData(r.data)+' · Unid. '+r.unidade+' · '+r.id;
+  if(view.tela==='reg') return renderReg(r);
+  renderRonda(r);
+}
+
+function renderHome(){
+  $('#ttl').firstChild.nodeValue='Ronda NQSP ';
+  $('#ttlsub').textContent='HRCAC · NQSPGR / SEQUALI';
+  const naoExp=db.rondas.filter(r=>!r.exportada);
+  const lista=db.rondas.map(r=>{
+    const st=r.exportada?'<span class="pill exp">exportada</span>':(r.status==='concluida'?'<span class="pill ok">concluída</span>':'<span class="pill and">em andamento</span>');
+    return `<button class="rcard" data-open="${r.id}"><span class="t">${esc(r.setor||'Setor não informado')} · Unid. ${esc(r.unidade)}</span>${st}
+      <span class="m">${brData(r.data)} · turno ${esc(r.turno)} · ${r.pacientes.length} paciente(s) · ${esc(r.id)}</span><span class="m">${r.status==='concluida'?'':pendRonda(r).length+' pendência(s)'}</span></button>`;
+  }).join('');
+  $('#app').innerHTML=`
+    ${naoExp.length?`<div class="banner"><span><b>${naoExp.length} ronda(s) ainda não exportada(s).</b> Os dados estão só neste iPad até você exportar.</span><button class="btn primary small" id="expPend">Exportar pendentes</button></div>`
+      :(db.rondas.length?`<div class="banner ok"><span>Tudo exportado.</span></div>`:'')}
+    <div class="btns"><button class="btn primary" id="nova">Nova ronda</button></div>
+    <section class="panel"><h2>Rondas neste aparelho</h2>
+      <div class="list">${lista||'<p style="margin:0;color:var(--muted)">Nenhuma ronda ainda. Toque em <b>Nova ronda</b> para começar. A primeira ronda registrada aqui marca o início da linha de base do REG 005 SEG.</p>'}</div>
+    </section>
+    <section class="panel"><h2>Exportar e backup</h2>
+      <div class="btns">
+        <button class="btn" id="expCsvAll">Planilha (.csv) de todas</button>
+        <button class="btn" id="expJson">Backup completo (.json)</button>
+        <label class="btn" for="impJson" style="display:inline-flex;align-items:center">Restaurar backup</label>
+        <input type="file" id="impJson" accept=".json,application/json" hidden>
+      </div>
+      <p style="margin:0;font-size:13px;color:var(--muted)">A planilha abre no LibreOffice e no Google Planilhas (separador ponto e vírgula, UTF-8). Uma linha por paciente; nome e data de nascimento não entram. O backup serve para levar as rondas para outro aparelho ou restaurar após limpar o navegador.</p>
+    </section>
+    <section class="panel"><h2>Configurações</h2>
+      <div class="row">
+        <div class="field"><label for="cfgR">Rondista padrão</label><input id="cfgR" value="${esc(db.cfg.rondista)}"></div>
+        <div class="field"><label for="cfgM">M3.4 na visão REG 005 (decisão D3 pendente)</label>
+          <select id="cfgM"><option value="repetir"${db.cfg.m34==='repetir'?' selected':''}>Repetir nas colunas dos pacientes</option><option value="p1"${db.cfg.m34==='p1'?' selected':''}>Só na coluna P1</option></select></div>
+      </div>
+      <p style="margin:0;font-size:12px;color:var(--muted)">Versão do app ${APP_VERSION} · instrumento ${FORM_VERSION} · ${navigator.onLine?'online':'offline'}</p>
+    </section>`;
+  $('#bottom').hidden=true;
+  $('#nova').onclick=novaRonda;
+  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{view={tela:'ronda',id:b.dataset.open,aba:'cab',crit:{}};render();window.scrollTo(0,0);});
+  if($('#expPend')) $('#expPend').onclick=()=>exportCsv(naoExp,true);
+  $('#expCsvAll').onclick=()=>exportCsv(db.rondas,false);
+  $('#expJson').onclick=exportJson;
+  $('#impJson').onchange=importJson;
+  $('#cfgR').onchange=e=>{db.cfg.rondista=e.target.value;save();};
+  $('#cfgM').onchange=e=>{db.cfg.m34=e.target.value;save();};
+}
+
+function seg(name,opts,val,labels){ return `<div class="seg" role="group" data-seg="${name}">${opts.map((o,i)=>`<button type="button" data-v="${o}" aria-pressed="${val===o}">${labels?labels[i]:o}</button>`).join('')}</div>`; }
+
+function renderRonda(r){
+  const tabs=[['cab','Cabeçalho',pendRonda({...r,pacientes:[]}).length?'pendente':'ok'],
+    ...r.pacientes.map((p,i)=>{const q=pendPct(p);const feito=ITENS.length-q.vaz.length;return ['p'+i,p.pos+(p.leito?' · L'+p.leito:''),feito+'/'+ITENS.length];}),
+    ['fim','Fechamento',pendRonda(r).length+' pend.']];
+  let html=`<nav class="tabs" role="tablist">${tabs.map(t=>`<button role="tab" data-aba="${t[0]}" aria-selected="${view.aba===t[0]}">${esc(t[1])}<small>${esc(t[2])}</small></button>`).join('')}
+    ${r.pacientes.length<4?'<button id="addP" aria-selected="false">+ Paciente<small>até 4 por folha</small></button>':''}</nav>`;
+  if(view.aba==='cab') html+=htmlCab(r);
+  else if(view.aba==='fim') html+=htmlFim(r);
+  else { const i=+view.aba.slice(1); html+=htmlPct(r,r.pacientes[i],i); }
+  $('#app').innerHTML=html;
+  bindRonda(r);
+  paintBottom();
+}
+
+function htmlCab(r){
+  return `<section class="panel"><h2>Identificação da ronda</h2>
+    <div class="row">
+      <div class="field" style="flex:0 0 auto"><label>Unidade</label>${seg('unidade',['I','II'],r.unidade)}</div>
+      <div class="field"><label for="f_setor">Setor</label><input id="f_setor" list="dlSet" value="${esc(r.setor)}" autocomplete="off"><datalist id="dlSet">${SETORES.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+      <div class="field" style="flex:0 1 170px"><label for="f_data">Data</label><input id="f_data" type="date" value="${esc(r.data)}"></div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:0 0 auto"><label>Turno</label>${seg('turno',['M','T','N'],r.turno)}</div>
+      <div class="field" style="flex:0 1 150px"><label for="f_hIni">Hora início</label><input id="f_hIni" type="time" value="${esc(r.hIni)}"></div>
+      <div class="field" style="flex:0 1 150px"><label for="f_hFim">Hora fim</label><input id="f_hFim" type="time" value="${esc(r.hFim)}"></div>
+      <div class="field" style="flex:0 1 150px"><label for="f_leitos">Leitos ocupados</label><input id="f_leitos" type="number" inputmode="numeric" min="0" value="${esc(r.leitos)}"></div>
+      <div class="field" style="flex:0 1 150px"><label for="f_folha">Nº folha REG 005</label><input id="f_folha" inputmode="numeric" value="${esc(r.folha)}"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="f_resp">Responsável do setor</label><input id="f_resp" value="${esc(r.resp)}"></div>
+      <div class="field"><label for="f_rondista">Ronda por</label><input id="f_rondista" value="${esc(r.rondista)}"></div>
+    </div></section>
+    <section class="panel"><h2>Item de setor (marcar uma vez)</h2>
+      <div class="item" style="border:0;padding:0">
+        <div class="txt"><span class="cod">M3.4</span>${esc(ITEM_SETOR[1])}<span class="fonte">SE</span></div>
+        <div class="marks" data-m34>${['C','NC','NA','NV'].map(v=>`<button type="button" data-v="${v}" aria-pressed="${r.m34===v}">${v}</button>`).join('')}</div>
+        ${r.m34==='NV'||r.m34==='NC'?`<div class="extra"><input id="f_m34mot" class="${r.m34==='NV'&&!r.m34motivo.trim()?'req':''}" placeholder="${r.m34==='NV'?'Motivo do NV (obrigatório)':'O que estava em desacordo'}" value="${esc(r.m34motivo)}"></div>`:''}
+      </div>
+    </section>
+    <div class="btns"><button class="btn primary" data-goto="p0">Começar pelo P1</button></div>`;
+}
+
+function htmlPct(r,p,i){
+  const pre=`<section class="panel"><h2>${p.pos} · dados do paciente</h2>
+    <div class="row">
+      <div class="field" style="flex:0 1 140px"><label for="p_leito">Leito</label><input id="p_leito" value="${esc(p.leito)}"></div>
+      <div class="field"><label for="p_atend">Nº do atendimento</label><input id="p_atend" inputmode="numeric" value="${esc(p.atend)}" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="field" style="flex:0 0 auto"><label>RB · risco de LP (Braden registrada)</label>${seg('RB',['B','M','A','NV'],p.RB)}</div>
+      <div class="field" style="flex:0 0 auto"><label>RQ · risco de queda (Morse / Humpty Dumpty)</label>${seg('RQ',['B','M','A','NV'],p.RQ)}</div>
+      <div class="field" style="flex:0 0 auto"><label>EN · responde ou há acompanhante</label>${seg('EN',['S','N'],p.EN)}</div>
+    </div>
+    <p style="margin:0;font-size:12px;color:var(--muted)">B baixo · M moderado · A alto · NV escala não registrada. RB, RQ e EN preenchem sozinhos os itens que dependem deles (marcados "auto"); você pode trocar.</p>
+  </section>`;
+  const blocos=BLOCOS.map(b=>`<div class="bloco"><h3>${esc(b.nome)}</h3>${b.itens.map(it=>htmlItem(p,it[0])).join('')}</div>`).join('');
+  const ev=`<div class="bloco"><h3>Eventos encontrados (fora do REG 005; achado = notificar no Interact)</h3>
+    ${EVENTOS.map(e=>`<div class="item"><div class="txt"><span class="cod">${e[0]}</span>${esc(e[1])}${e[3]?`<div style="font-size:12px;color:var(--muted)">${esc(e[3])}</div>`:''}</div>
+      <div class="marks" data-ev="${e[0]}">${e[2].map(v=>`<button type="button" data-v="${v}" aria-pressed="${p.ev[e[0]]===v}">${v}</button>`).join('')}</div>
+      ${e[0]==='EV.4'&&p.ev['EV.4']==='S'?`<div class="extra"><input id="p_ev4" class="${!p.ev4desc.trim()?'req':''}" placeholder="Descreva o evento" value="${esc(p.ev4desc)}"></div>`:''}</div>`).join('')}
+    <div class="item"><div class="txt"><span class="cod">NOT</span>Nº da notificação gerada no Interact</div><div></div>
+      <div class="extra"><input id="p_not" class="${pendPct(p).notFalta?'req':''}" inputmode="numeric" placeholder="Separe por vírgula se houver mais de uma" value="${esc(p.not)}"></div></div>
+    <div class="item"><div class="txt"><span class="cod">OBS</span>Observações do paciente</div><div></div>
+      <div class="extra"><input id="p_obs" value="${esc(p.obsPct)}"></div></div></div>`;
+  const nav=`<div class="btns noprint">${i>0?`<button class="btn" data-goto="p${i-1}">‹ ${r.pacientes[i-1].pos}</button>`:''}
+    ${i<r.pacientes.length-1?`<button class="btn primary" data-goto="p${i+1}">${r.pacientes[i+1].pos} ›</button>`:(r.pacientes.length<4?'<button class="btn primary" id="addP2">+ Próximo paciente</button>':'')}
+    <button class="btn" data-goto="fim">Fechamento</button>
+    <button class="btn danger" id="delP">Remover ${p.pos}</button></div>`;
+  return pre+blocos+ev+nav;
+}
+
+function htmlItem(p,cod){
+  const it=ITENS.find(x=>x.cod===cod); const v=p.v[cod]||'';
+  const extra = v==='NV' ? `<div class="extra"><input data-mot="${cod}" class="${!(p.mot[cod]||'').trim()?'req':''}" placeholder="Motivo do NV (obrigatório)" value="${esc(p.mot[cod]||'')}"></div>`
+    : (v==='NC'||v==='NA') ? `<div class="extra"><input data-obs="${cod}" placeholder="${v==='NC'?'O que faltou ou estava errado (opcional)':'Motivo do NA (opcional)'}" value="${esc(p.obs[cod]||'')}"></div>` : '';
+  return `<div class="item${v?'':' vazio'}" id="it-${cod.replace('.','_')}">
+    <div class="txt"><span class="cod">${cod}</span>${esc(it.txt)}<span class="fonte">${it.fonte}</span>${p.auto[cod]?'<span class="auto">auto</span>':''}
+      <button type="button" class="info" data-crit="${cod}">${view.crit[cod]?'ocultar critério':'critério'}</button></div>
+    <div class="marks" data-item="${cod}">${['C','NC','NA','NV'].map(x=>`<button type="button" data-v="${x}" aria-pressed="${v===x}">${x}</button>`).join('')}</div>
+    ${view.crit[cod]?`<div class="crit">${esc(it.crit)}</div>`:''}${extra}</div>`;
+}
+
+function htmlFim(r){
+  const L=pendRonda(r);
+  const nc=[]; r.pacientes.forEach(p=>ITENS.forEach(i=>{ if(p.v[i.cod]==='NC') nc.push(`${p.pos} · ${i.cod}${p.obs[i.cod]?': '+p.obs[i.cod]:''}`); if(p.v[i.cod]==='NV') nc.push(`${p.pos} · ${i.cod} NV: ${p.mot[i.cod]||'sem motivo'}`); }));
+  if(r.m34==='NC'||r.m34==='NV') nc.unshift(`Setor · M3.4 ${r.m34}${r.m34motivo?': '+r.m34motivo:''}`);
+  return `<section class="panel"><h2>Pendências</h2>
+      <ul class="pend">${L.length?L.map(x=>`<li>${esc(x)}</li>`).join(''):'<li class="ok">Sem pendências. Pode concluir.</li>'}</ul>
+      ${r.hFim?'':'<div class="btns"><button class="btn" id="fimAgora">Registrar hora de fim agora</button></div>'}
+    </section>
+    <section class="panel"><h2>Não conformidades e motivos de NV (gerado)</h2>
+      ${nc.length?`<ul class="pend">${nc.map(x=>`<li style="background:var(--bg)">${esc(x)}</li>`).join('')}</ul>`:'<p style="margin:0;color:var(--muted)">Nenhuma NC ou NV registrada.</p>'}
+    </section>
+    <section class="panel"><h2>Encaminhamentos / a quem foi comunicado</h2>
+      <div class="field"><textarea id="f_enc">${esc(r.encaminhamentos)}</textarea></div>
+      <h2>Observações gerais da ronda</h2>
+      <div class="field"><textarea id="f_obs">${esc(r.obs)}</textarea></div>
+    </section>
+    <div class="btns">
+      <button class="btn primary" id="concluir">${r.status==='concluida'?'Ronda concluída ✓':'Concluir ronda'}</button>
+      <button class="btn" id="verReg">Ver no formato REG 005</button>
+      <button class="btn" id="expEsta">Exportar esta ronda (.csv)</button>
+      <button class="btn danger" id="delR">Apagar ronda</button>
+    </div>`;
+}
+
+function renderReg(r){
+  const cols=r.pacientes.slice(0,4); while(cols.length<4) cols.push(null);
+  const val=(p,cod)=>{ if(!p) return ''; if(cod==='M3.4'){ if(db.cfg.m34==='p1'&&p!==r.pacientes[0]) return ''; return r.m34==='NV'?'NA':(r.m34||''); } const v=p.v[cod]||''; return v==='NV'?'NA':v; };
+  const txt=cod=>cod==='M3.4'?ITEM_SETOR[1]:ITENS.find(i=>i.cod===cod).txt;
+  const meta=cod=>({M1:'META 1',M2:'META 2',M3:'META 3',LP:'META 6 (LPP)',QD:'META 6 (QUEDA)'})[cod.slice(0,2)];
+  let last='', rows='';
+  ORDEM_REG.forEach(cod=>{ const m=meta(cod); if(m!==last){ rows+=`<tr><td class="meta" colspan="6">${m}</td></tr>`; last=m; }
+    const vs=cols.map(p=>val(p,cod)); const c=vs.filter(x=>x==='C').length,n=vs.filter(x=>x==='NC').length,a=vs.filter(x=>x==='NA').length;
+    rows+=`<tr><td>${esc(txt(cod))}</td>${vs.map(x=>`<td class="v">${x}</td>`).join('')}<td class="tot">C ${c} · NC ${n} · NA ${a}</td></tr>`; });
+  $('#app').innerHTML=`<div class="btns noprint"><button class="btn" id="voltar">‹ Voltar à ronda</button><button class="btn primary" id="imprimir">Imprimir / salvar PDF</button></div>
+    <div class="reg">
+      <div class="hdr"><span><b>REG 005 SEG</b> · transcrição da ronda ${esc(r.id)}</span><span><b>Data:</b> ${brData(r.data)}</span><span><b>Setor:</b> ${esc(r.setor)}</span><span><b>Unidade:</b> ${esc(r.unidade)}</span><span><b>Avaliador:</b> ${esc(r.rondista)}</span><span><b>Folha nº:</b> ${esc(r.folha)}</span></div>
+      <table><thead><tr><th>Item</th>${cols.map((p,i)=>`<th>P${i+1}${p?`<br><span style="font-weight:400">Atend. ${esc(p.atend)}${p.leito?' · L'+esc(p.leito):''}</span>`:''}</th>`).join('')}<th>TOTAL</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="nota">NV da base vira NA no formulário (não altera a conformidade C ÷ (C + NC)). M3.4: ${db.cfg.m34==='p1'?'registrado só em P1':'repetido nas colunas dos pacientes'} (decisão D3 pendente). Conformidade do item = C ÷ (C + NC); não dividir C pelo TOTAL.</p>
+    </div>`;
+  $('#bottom').hidden=true;
+  $('#voltar').onclick=()=>{view.tela='ronda';view.aba='fim';render();};
+  $('#imprimir').onclick=()=>{ try{ window.print(); }catch(e){ toast('Impressão indisponível neste navegador.'); } };
+}
+
+/* ---------- Eventos ---------- */
+function bindRonda(r){
+  document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.aba;render();window.scrollTo(0,0);});
+  document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.goto;render();window.scrollTo(0,0);});
+  const add=()=>{ if(r.pacientes.length>=4) return; r.pacientes.push(novoPct(r.pacientes.length+1)); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
+  if($('#addP')) $('#addP').onclick=add; if($('#addP2')) $('#addP2').onclick=add;
+  const inp=(id,fn)=>{ const el=$(id); if(el) el.addEventListener('input',e=>{fn(e.target.value);toque(r);save();}); };
+  if(view.aba==='cab'){
+    inp('#f_setor',v=>r.setor=v); inp('#f_data',v=>r.data=v); inp('#f_hIni',v=>r.hIni=v); inp('#f_hFim',v=>r.hFim=v);
+    inp('#f_leitos',v=>r.leitos=v); inp('#f_folha',v=>r.folha=v); inp('#f_resp',v=>r.resp=v); inp('#f_rondista',v=>r.rondista=v);
+    inp('#f_m34mot',v=>{r.m34motivo=v; $('#f_m34mot').classList.toggle('req',r.m34==='NV'&&!v.trim());});
+    $('#f_setor').addEventListener('input',()=>{ $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' '; });
+    document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;r[g.dataset.seg]=b.dataset.v;toque(r);save();render();});
+    $('[data-m34]').onclick=e=>{const b=e.target.closest('button');if(!b)return;r.m34=r.m34===b.dataset.v?'':b.dataset.v;toque(r);save();render();};
+  } else if(view.aba==='fim'){
+    inp('#f_enc',v=>r.encaminhamentos=v); inp('#f_obs',v=>r.obs=v);
+    if($('#fimAgora')) $('#fimAgora').onclick=()=>{r.hFim=agora();toque(r);save();render();};
+    $('#concluir').onclick=()=>{ const L=pendRonda(r); if(L.length){ confirmar(`Ainda há ${L.length} pendência(s). Concluir mesmo assim?`,'Concluir',()=>{r.status='concluida';if(!r.hFim)r.hFim=agora();toque(r);save(true);render();}); } else { r.status='concluida'; toque(r); save(true); toast('Ronda concluída. Lembre de exportar.'); render(); } };
+    $('#verReg').onclick=()=>{view.tela='reg';render();window.scrollTo(0,0);};
+    $('#expEsta').onclick=()=>exportCsv([r],true);
+    $('#delR').onclick=()=>confirmar('Apagar esta ronda do aparelho? '+(r.exportada?'Ela já foi exportada.':'Ela ainda NÃO foi exportada.'),'Apagar',()=>{db.rondas=db.rondas.filter(x=>x!==r);save(true);view={tela:'home'};render();});
+  } else {
+    const i=+view.aba.slice(1), p=r.pacientes[i];
+    inp('#p_leito',v=>p.leito=v); inp('#p_atend',v=>p.atend=v); inp('#p_obs',v=>p.obsPct=v);
+    inp('#p_not',v=>{p.not=v; $('#p_not').classList.toggle('req',pendPct(p).notFalta);});
+    inp('#p_ev4',v=>{p.ev4desc=v; $('#p_ev4').classList.toggle('req',!v.trim());});
+    document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=g.dataset.seg;p[k]=p[k]===b.dataset.v?'':b.dataset.v;aplicarAuto(p);toque(r);save();keep(()=>render());});
+    document.querySelectorAll('[data-item]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const cod=g.dataset.item;
+      p.v[cod]=p.v[cod]===b.dataset.v?'':b.dataset.v; if(!p.v[cod]) delete p.v[cod]; delete p.auto[cod]; if(p.v[cod]!=='NV') delete p.mot[cod];
+      if(cod==='M1.3') aplicarAuto(p); toque(r); save(); keep(()=>render(), p.v[cod]==='NV'?cod:null);});
+    document.querySelectorAll('[data-ev]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=g.dataset.ev;p.ev[k]=p.ev[k]===b.dataset.v?'':b.dataset.v;toque(r);save();keep(()=>render());});
+    document.querySelectorAll('[data-mot]').forEach(el=>el.addEventListener('input',e=>{p.mot[el.dataset.mot]=e.target.value;delete p.auto[el.dataset.mot];el.classList.toggle('req',!e.target.value.trim());toque(r);save();}));
+    document.querySelectorAll('[data-obs]').forEach(el=>el.addEventListener('input',e=>{p.obs[el.dataset.obs]=e.target.value;toque(r);save();}));
+    document.querySelectorAll('[data-crit]').forEach(b=>b.onclick=()=>{const c=b.dataset.crit;view.crit[c]=!view.crit[c];keep(()=>render());});
+    $('#delP').onclick=()=>confirmar(`Remover ${p.pos} desta ronda?`,'Remover',()=>{r.pacientes.splice(i,1);r.pacientes.forEach((q,k)=>q.pos='P'+(k+1));toque(r);save(true);view.aba=r.pacientes.length?'p'+Math.max(0,i-1):'cab';render();});
+  }
+}
+function keep(fn,focusMot){ const y=window.scrollY; fn(); window.scrollTo(0,y); if(focusMot){ const el=document.querySelector(`[data-mot="${focusMot}"]`); if(el) el.focus({preventScroll:true}); } }
+
+function paintBottom(){
+  const bt=$('#bottom'); if(view.tela!=='ronda'){ bt.hidden=true; return; }
+  const r=ronda(); if(!r){bt.hidden=true;return;}
+  bt.hidden=false;
+  let info='';
+  if(view.aba.startsWith('p')){ const p=r.pacientes[+view.aba.slice(1)]; if(p){ const q=pendPct(p); info=`${p.pos}: ${ITENS.length-q.vaz.length}/${ITENS.length} itens`; } }
+  else info=pendRonda(r).length+' pendência(s) na ronda';
+  bt.innerHTML=`<span class="st">${esc(info)} · ${saveOk?'salvo no iPad':'<b style="color:var(--nc)">falha ao salvar</b>'}</span>
+    ${view.aba.startsWith('p')?'<button class="btn small" id="proxVazio">Próximo em branco</button>':''}`;
+  if($('#proxVazio')) $('#proxVazio').onclick=()=>{ const el=document.querySelector('.item.vazio'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); } else toast('Todos os itens deste paciente estão marcados.'); };
+}
+
+/* ---------- Exportação ---------- */
+function csvCell(v){ v=String(v??''); return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function linhasCsv(rondas){
+  const head=['id_ronda','versao_instrumento','unidade','data','competencia','turno','setor','rondista','resp_setor','folha_reg005','hora_inicio','hora_fim','leitos_ocupados','status',
+    'pct','leito','n_atendimento','RB','RQ','EN',...ITENS.map(i=>i.cod),'M3.4','M3.4_motivo','motivos_NV','observacoes_NC_NA','auto_preenchidos','EV.1','EV.2','EV.3','EV.4','EV.4_descricao','NOT','obs_paciente',
+    'itens_em_branco','itens_NV','encaminhamentos','obs_ronda'];
+  const out=[head];
+  rondas.slice().sort((a,b)=>(a.data+a.hIni).localeCompare(b.data+b.hIni)).forEach(r=>{
+    r.pacientes.forEach((p,k)=>{
+      const mot=ITENS.filter(i=>p.v[i.cod]==='NV').map(i=>i.cod+': '+(p.mot[i.cod]||'sem motivo')).join(' | ');
+      const obs=ITENS.filter(i=>(p.v[i.cod]==='NC'||p.v[i.cod]==='NA')&&(p.obs[i.cod]||'').trim()).map(i=>i.cod+': '+p.obs[i.cod]).join(' | ');
+      out.push([r.id,r.versao,r.unidade,brData(r.data),(r.data||'').slice(0,7).replace('-',''),r.turno,r.setor,r.rondista,r.resp,r.folha,r.hIni,r.hFim,r.leitos,r.status,
+        p.pos,p.leito,p.atend,p.RB,p.RQ,p.EN,...ITENS.map(i=>p.v[i.cod]||''),k===0?r.m34:'',k===0?r.m34motivo:'',mot,obs,Object.keys(p.auto).join(' '),
+        p.ev['EV.1'],p.ev['EV.2'],p.ev['EV.3'],p.ev['EV.4'],p.ev4desc,p.not,p.obsPct,
+        ITENS.filter(i=>!p.v[i.cod]).length,ITENS.filter(i=>p.v[i.cod]==='NV').length,k===0?r.encaminhamentos:'',k===0?r.obs:'']);
+    });
+  });
+  return out;
+}
+async function entregar(nome,conteudo,tipo){
+  const blob=new Blob([conteudo],{type:tipo});
+  try{
+    const file=new File([blob],nome,{type:tipo});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:nome}); return true; }
+  }catch(e){ if(e&&e.name==='AbortError') return false; }
+  try{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000); return true; }
+  catch(e){ toast('Não foi possível gerar o arquivo neste navegador.'); return false; }
+}
+async function exportCsv(rondas,marcar){
+  if(!rondas.length){ toast('Nada para exportar.'); return; }
+  const txt='﻿'+linhasCsv(rondas).map(l=>l.map(csvCell).join(';')).join('\r\n');
+  const d=new Date(); const nome=`ronda-nqsp_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
+  const ok=await entregar(nome,txt,'text/csv');
+  if(ok&&marcar){ confirmar('O arquivo foi salvo (no Arquivos, Drive ou Skybox)? Se sim, as rondas ficam marcadas como exportadas.','Sim, salvei',()=>{rondas.forEach(r=>r.exportada=true);save(true);render();}); }
+}
+async function exportJson(){
+  const d=new Date();
+  await entregar(`ronda-nqsp_backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`,JSON.stringify({app:'ronda-nqsp',versao:APP_VERSION,exportado:d.toISOString(),...db},null,1),'application/json');
+}
+function importJson(e){
+  const f=e.target.files[0]; if(!f) return; const fr=new FileReader();
+  fr.onload=()=>{ try{ const d=JSON.parse(fr.result); if(!Array.isArray(d.rondas)) throw new Error('formato');
+      let n=0; d.rondas.forEach(r=>{ const i=db.rondas.findIndex(x=>x.id===r.id); if(i<0){db.rondas.push(r);n++;} else if((r.alterada||'')>(db.rondas[i].alterada||'')){db.rondas[i]=r;n++;} });
+      db.rondas.sort((a,b)=>(b.criada||'').localeCompare(a.criada||'')); save(true); toast(n+' ronda(s) restaurada(s) ou atualizada(s).'); render();
+    }catch(err){ toast('Arquivo inválido: use um backup .json gerado por este app.'); } };
+  fr.readAsText(f);
+}
+
+/* ---------- UI auxiliar ---------- */
+function confirmar(msg,ok,fn){
+  const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="box" role="dialog" aria-modal="true"><p>${esc(msg)}</p><div class="btns" style="justify-content:flex-end"><button class="btn" data-x>Cancelar</button><button class="btn primary" data-ok>${esc(ok)}</button></div></div>`;
+  document.body.appendChild(m); m.querySelector('[data-x]').onclick=()=>m.remove(); m.querySelector('[data-ok]').onclick=()=>{m.remove();fn();}; m.querySelector('[data-ok]').focus();
+}
+let toastT; function toast(t){ let el=$('.toast'); if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);} el.textContent=t; clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3500); }
+
+$('#btnHome').onclick=()=>{view={tela:'home'};render();window.scrollTo(0,0);};
+window.addEventListener('pagehide',()=>save(true));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') save(true); });
+load(); render();
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
