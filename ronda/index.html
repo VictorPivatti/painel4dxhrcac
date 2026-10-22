@@ -62,6 +62,7 @@ button{cursor:pointer}
 .row{display:flex;flex-wrap:wrap;gap:12px}
 .field{display:flex;flex-direction:column;gap:4px;flex:1 1 180px;min-width:0}
 .field label{font-size:13px;color:var(--muted)}
+.panel>.field{flex:0 0 auto}
 .field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%}
 textarea{resize:vertical;min-height:80px}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 16px;min-height:44px;font-weight:550}
@@ -78,6 +79,13 @@ textarea{resize:vertical;min-height:80px}
 .banner{border-radius:var(--r);padding:12px 16px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .banner b{color:var(--warn)}
 .banner.ok{background:var(--c-soft);border-color:var(--c)}
+.banner.danger{background:var(--nc-soft);border-color:var(--nc)}
+.banner.danger b{color:var(--nc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-weight:700;border-radius:6px;padding:6px 10px;background:var(--accent-soft);border:1px solid var(--accent)}
+.chip.res{background:var(--bg);border-style:dashed;color:var(--muted)}
+.chip.usado{opacity:.45;text-decoration:line-through}
+.aviso{font-size:13px;color:var(--nc);font-weight:600}
 
 .list{display:flex;flex-direction:column;gap:8px}
 .rcard{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;text-align:left;width:100%}
@@ -167,7 +175,7 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 'use strict';
-const APP_VERSION = '1.0 · 22/10/2026';
+const APP_VERSION = '1.1 · 22/10/2026';
 const FORM_VERSION = 'REG005SEG-v00/folha-v03.1';
 const STORE_KEY = 'rondaNQSP.v1';
 
@@ -230,11 +238,11 @@ const EVENTOS = [
 ];
 
 /* ---------- Estado e armazenamento ---------- */
-let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir'}};
+let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir', setores:{I:SETORES.slice(), II:[]}}};
 let view = {tela:'home', id:null, aba:'cab', crit:{}};
-function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); } }catch(e){ console.warn('load',e); } }
+function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); if(!db.cfg.setores) db.cfg.setores={I:SETORES.slice(),II:[]}; } }catch(e){ console.warn('load',e); } }
 let saveT=null, saveOk=true;
-function save(now){ clearTimeout(saveT); const f=()=>{ try{ localStorage.setItem(STORE_KEY,JSON.stringify(db)); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now) f(); else saveT=setTimeout(f,250); }
+function save(now){ const f=()=>{ saveT=null; try{ localStorage.setItem(STORE_KEY,JSON.stringify(db)); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now){ clearTimeout(saveT); f(); } else if(!saveT) saveT=setTimeout(f,300); }
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 
 const $=s=>document.querySelector(s);
@@ -253,7 +261,7 @@ function novaRonda(){
     m34:'',m34motivo:'',pacientes:[novoPct(1)],encaminhamentos:'',obs:'',status:'andamento',exportada:false,criada:d.toISOString(),alterada:d.toISOString()};
   db.rondas.unshift(r); save(true); view={tela:'ronda',id,aba:'cab',crit:{}}; render();
 }
-function novoPct(n){ return {pos:'P'+n,leito:'',atend:'',RB:'',RQ:'',EN:'',v:{},mot:{},obs:{},auto:{},ev:{'EV.1':'','EV.2':'','EV.3':'','EV.4':''},ev4desc:'',not:'',obsPct:''}; }
+function novoPct(n){ return {pos:'P'+n,leito:'',atend:'',RB:'',RQ:'',EN:'',v:{},mot:{},obs:{},auto:{},ev:{'EV.1':'','EV.2':'','EV.3':'','EV.4':''},ev4desc:'',not:'',obsPct:'',origem:'',origemMot:''}; }
 function toque(r){ r.alterada=new Date().toISOString(); r.exportada=false; }
 
 /* ---------- Regras automáticas (D1, D2, entrevista) ---------- */
@@ -276,6 +284,39 @@ function aplicarAuto(p){
   });
 }
 
+/* ---------- Sorteio de leitos ---------- */
+function parseLista(t){ return [...new Set(String(t||'').split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean))]; }
+function rand(n){ const a=new Uint32Array(1); (self.crypto||window.crypto).getRandomValues(a); return a[0]%n; }
+function sortear(r){
+  const lista=parseLista(r.leitosLista); let base, pool;
+  if(lista.length){ base='lista'; pool=lista.slice(); r.leitos=String(lista.length); }
+  else { const n=parseInt(r.leitos,10); if(!(n>0)) return 'Informe os leitos ocupados (lista ou número) antes de sortear.'; base='posicao'; pool=Array.from({length:n},(_,i)=>String(i+1)); }
+  const N=pool.length, k=Math.min(6,N), out=[];
+  for(let i=0;i<k;i++){ const j=rand(pool.length); out.push(pool.splice(j,1)[0]); }
+  const ref=r.sorteio?(r.sorteio.refeito||0)+1:0;
+  const dd=new Date(); r.sorteio={em:dd.getFullYear()+'-'+pad(dd.getMonth()+1)+'-'+pad(dd.getDate())+'T'+pad(dd.getHours())+':'+pad(dd.getMinutes()),base,N,sorteados:out.slice(0,Math.min(4,N)),reservas:out.slice(4),refeito:ref};
+  return null;
+}
+function rotuloLeito(r,x){ return r.sorteio&&r.sorteio.base==='posicao'?x+'º ocupado':'Leito '+x; }
+function textoSorteio(r){ const s=r.sorteio; if(!s) return ''; return `${s.base==='lista'?'lista':'posição no censo'} N=${s.N} | sorteados: ${s.sorteados.join(', ')} | reservas: ${s.reservas.join(', ')||'-'} | refeito ${s.refeito}x | ${s.em.slice(0,16).replace('T',' ')}`; }
+function origemAuto(r,p){
+  if(!r.sorteio||r.sorteio.base!=='lista'||!p.leito.trim()) return;
+  if(p.origem&&!p.origemAuto) return;
+  const l=p.leito.trim(); const o=r.sorteio.sorteados.includes(l)?'S':(r.sorteio.reservas.includes(l)?'R':'E');
+  p.origem=o; p.origemAuto=true;
+}
+function proxSorteado(r){
+  if(!r.sorteio||r.sorteio.base!=='lista') return '';
+  const usados=r.pacientes.map(p=>p.leito.trim());
+  return r.sorteio.sorteados.find(x=>!usados.includes(x))||'';
+}
+/* ---------- Atendimento duplicado no mesmo dia ---------- */
+function duplicados(r,p){
+  const a=(p.atend||'').trim(); if(!a) return [];
+  const L=[]; db.rondas.forEach(x=>{ if(x.data!==r.data) return; x.pacientes.forEach(q=>{ if(q!==p&&(q.atend||'').trim()===a) L.push((x.setor||'sem setor')+' '+q.pos+(x===r?' (esta ronda)':'')); }); });
+  return L;
+}
+
 /* ---------- Pendências ---------- */
 function pendPct(p){
   const vaz=ITENS.filter(i=>!p.v[i.cod]).map(i=>i.cod);
@@ -290,10 +331,14 @@ function pendRonda(r){
   if(!r.setor) L.push('Setor não informado');
   if(!r.leitos) L.push('Leitos ocupados não informado');
   if(!r.m34) L.push('M3.4 (controlados, item de setor) não marcado');
+  if(!r.sorteio) L.push('Pacientes não sorteados (seleção sem sorteio)');
   if(r.m34==='NV'&&!r.m34motivo.trim()) L.push('M3.4 = NV sem motivo');
   if(!r.hFim) L.push('Hora de fim não registrada');
   r.pacientes.forEach(p=>{ const q=pendPct(p);
     if(q.semAtend) L.push(p.pos+': nº de atendimento em branco');
+    const dp=duplicados(r,p); if(dp.length) L.push(p.pos+': nº de atendimento repetido hoje em '+dp.join(', '));
+    if(r.sorteio&&!p.origem) L.push(p.pos+': origem (sorteado/reserva/escolha) não marcada');
+    if((p.origem==='R'||p.origem==='E')&&!(p.origemMot||'').trim()) L.push(p.pos+': motivo da '+(p.origem==='R'?'substituição':'escolha')+' em branco');
     if(q.pre.length) L.push(p.pos+': '+q.pre.join(', ')+' em branco');
     if(q.vaz.length) L.push(p.pos+': '+q.vaz.length+' item(ns) em branco ('+q.vaz.join(', ')+')');
     if(q.nvSem.length) L.push(p.pos+': NV sem motivo em '+q.nvSem.join(', '));
@@ -319,12 +364,14 @@ function renderHome(){
   $('#ttl').firstChild.nodeValue='Ronda NQSP ';
   $('#ttlsub').textContent='HRCAC · NQSPGR / SEQUALI';
   const naoExp=db.rondas.filter(r=>!r.exportada);
+  const atrasadas=naoExp.filter(r=>r.status==='concluida'&&r.concluidaEm&&(Date.now()-Date.parse(r.concluidaEm))>864e5);
   const lista=db.rondas.map(r=>{
     const st=r.exportada?'<span class="pill exp">exportada</span>':(r.status==='concluida'?'<span class="pill ok">concluída</span>':'<span class="pill and">em andamento</span>');
     return `<button class="rcard" data-open="${r.id}"><span class="t">${esc(r.setor||'Setor não informado')} · Unid. ${esc(r.unidade)}</span>${st}
       <span class="m">${brData(r.data)} · turno ${esc(r.turno)} · ${r.pacientes.length} paciente(s) · ${esc(r.id)}</span><span class="m">${r.status==='concluida'?'':pendRonda(r).length+' pendência(s)'}</span></button>`;
   }).join('');
   $('#app').innerHTML=`
+    ${atrasadas.length?`<div class="banner danger"><span><b>${atrasadas.length} ronda(s) concluída(s) há mais de 24h sem exportar.</b> Se os dados do Safari forem limpos, elas se perdem.</span></div>`:''}
     ${naoExp.length?`<div class="banner"><span><b>${naoExp.length} ronda(s) ainda não exportada(s).</b> Os dados estão só neste iPad até você exportar.</span><button class="btn primary small" id="expPend">Exportar pendentes</button></div>`
       :(db.rondas.length?`<div class="banner ok"><span>Tudo exportado.</span></div>`:'')}
     <div class="btns"><button class="btn primary" id="nova">Nova ronda</button></div>
@@ -346,6 +393,10 @@ function renderHome(){
         <div class="field"><label for="cfgM">M3.4 na visão REG 005 (decisão D3 pendente)</label>
           <select id="cfgM"><option value="repetir"${db.cfg.m34==='repetir'?' selected':''}>Repetir nas colunas dos pacientes</option><option value="p1"${db.cfg.m34==='p1'?' selected':''}>Só na coluna P1</option></select></div>
       </div>
+      <div class="row">
+        <div class="field"><label for="cfgS1">Setores da Unidade I (um por linha)</label><textarea id="cfgS1" rows="5">${esc((db.cfg.setores.I||[]).join('\n'))}</textarea></div>
+        <div class="field"><label for="cfgS2">Setores da Unidade II (um por linha)</label><textarea id="cfgS2" rows="5" placeholder="Cadastre aqui os setores do HRCAC II">${esc((db.cfg.setores.II||[]).join('\n'))}</textarea></div>
+      </div>
       <p style="margin:0;font-size:12px;color:var(--muted)">Versão do app ${APP_VERSION} · instrumento ${FORM_VERSION} · ${navigator.onLine?'online':'offline'}</p>
     </section>`;
   $('#bottom').hidden=true;
@@ -357,6 +408,9 @@ function renderHome(){
   $('#impJson').onchange=importJson;
   $('#cfgR').onchange=e=>{db.cfg.rondista=e.target.value;save();};
   $('#cfgM').onchange=e=>{db.cfg.m34=e.target.value;save();};
+  const ls=v=>v.split('\n').map(x=>x.trim()).filter(Boolean);
+  $('#cfgS1').onchange=e=>{db.cfg.setores.I=ls(e.target.value);save();};
+  $('#cfgS2').onchange=e=>{db.cfg.setores.II=ls(e.target.value);save();};
 }
 
 function seg(name,opts,val,labels){ return `<div class="seg" role="group" data-seg="${name}">${opts.map((o,i)=>`<button type="button" data-v="${o}" aria-pressed="${val===o}">${labels?labels[i]:o}</button>`).join('')}</div>`; }
@@ -379,7 +433,7 @@ function htmlCab(r){
   return `<section class="panel"><h2>Identificação da ronda</h2>
     <div class="row">
       <div class="field" style="flex:0 0 auto"><label>Unidade</label>${seg('unidade',['I','II'],r.unidade)}</div>
-      <div class="field"><label for="f_setor">Setor</label><input id="f_setor" list="dlSet" value="${esc(r.setor)}" autocomplete="off"><datalist id="dlSet">${SETORES.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+      <div class="field"><label for="f_setor">Setor</label><input id="f_setor" list="dlSet" value="${esc(r.setor)}" autocomplete="off"><datalist id="dlSet">${(db.cfg.setores[r.unidade]||[]).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
       <div class="field" style="flex:0 1 170px"><label for="f_data">Data</label><input id="f_data" type="date" value="${esc(r.data)}"></div>
     </div>
     <div class="row">
@@ -400,6 +454,13 @@ function htmlCab(r){
         ${r.m34==='NV'||r.m34==='NC'?`<div class="extra"><input id="f_m34mot" class="${r.m34==='NV'&&!r.m34motivo.trim()?'req':''}" placeholder="${r.m34==='NV'?'Motivo do NV (obrigatório)':'O que estava em desacordo'}" value="${esc(r.m34motivo)}"></div>`:''}
       </div>
     </section>
+    <section class="panel"><h2>Seleção dos pacientes (sorteio)</h2>
+      <div class="field"><label for="f_lista">Leitos ocupados agora (opcional: números separados por vírgula ou espaço)</label><input id="f_lista" value="${esc(r.leitosLista||'')}" placeholder="ex.: 1, 2, 4, 5, 7, 9, 10, 12" autocomplete="off"></div>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Com a lista, o app sorteia os leitos. Só com o número de leitos ocupados, sorteia posições na ordem do censo (ex.: 3º ocupado). Sorteia 4 e mais 2 reservas, para quando um paciente não puder ser avaliado.</p>
+      ${r.sorteio?`<div class="chips">${r.sorteio.sorteados.map(x=>`<span class="chip${r.pacientes.some(p=>p.leito.trim()===x)?' usado':''}">${esc(rotuloLeito(r,x))}</span>`).join('')}${r.sorteio.reservas.map(x=>`<span class="chip res">reserva: ${esc(rotuloLeito(r,x))}</span>`).join('')}</div>
+        <p style="margin:0;font-size:12px;color:var(--muted)">Sorteado em ${esc(r.sorteio.em.slice(11,16))}${r.sorteio.refeito?` · refeito ${r.sorteio.refeito} vez(es), fica registrado na exportação`:''}</p>`:''}
+      <div class="btns"><button class="btn${r.sorteio?'':' primary'}" id="btnSort">${r.sorteio?'Refazer sorteio':'Sortear 4 + 2 reservas'}</button></div>
+    </section>
     <div class="btns"><button class="btn primary" data-goto="p0">Começar pelo P1</button></div>`;
 }
 
@@ -407,8 +468,10 @@ function htmlPct(r,p,i){
   const pre=`<section class="panel"><h2>${p.pos} · dados do paciente</h2>
     <div class="row">
       <div class="field" style="flex:0 1 140px"><label for="p_leito">Leito</label><input id="p_leito" value="${esc(p.leito)}"></div>
-      <div class="field"><label for="p_atend">Nº do atendimento</label><input id="p_atend" inputmode="numeric" value="${esc(p.atend)}" autocomplete="off"></div>
+      <div class="field"><label for="p_atend">Nº do atendimento</label><input id="p_atend" inputmode="numeric" value="${esc(p.atend)}" autocomplete="off"><span class="aviso" id="dupAviso">${duplicados(r,p).length?'Atenção: este nº já foi registrado hoje em '+esc(duplicados(r,p).join(', ')):''}</span></div>
     </div>
+    ${r.sorteio?`<div class="row"><div class="field" style="flex:0 0 auto"><label>Origem do paciente</label>${seg('origem',['S','R','E'],p.origem,['Sorteado','Reserva','Escolha'])}</div>
+      ${p.origem==='R'||p.origem==='E'?`<div class="field"><label for="p_omot">${p.origem==='R'?'Por que o sorteado foi substituído':'Por que foi escolhido fora do sorteio'}</label><input id="p_omot" class="${!(p.origemMot||'').trim()?'req':''}" style="${!(p.origemMot||'').trim()?'border-color:var(--nv);background:var(--nv-soft)':''}" value="${esc(p.origemMot||'')}"></div>`:''}</div>`:''}
     <div class="row">
       <div class="field" style="flex:0 0 auto"><label>RB · risco de LP (Braden registrada)</label>${seg('RB',['B','M','A','NV'],p.RB)}</div>
       <div class="field" style="flex:0 0 auto"><label>RQ · risco de queda (Morse / Humpty Dumpty)</label>${seg('RQ',['B','M','A','NV'],p.RQ)}</div>
@@ -491,12 +554,15 @@ function renderReg(r){
 function bindRonda(r){
   document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.aba;render();window.scrollTo(0,0);});
   document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.goto;render();window.scrollTo(0,0);});
-  const add=()=>{ if(r.pacientes.length>=4) return; r.pacientes.push(novoPct(r.pacientes.length+1)); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
+  const add=()=>{ if(r.pacientes.length>=4) return; const np=novoPct(r.pacientes.length+1); const ps=proxSorteado(r); if(ps){np.leito=ps;np.origem='S';np.origemAuto=true;} r.pacientes.push(np); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
   if($('#addP')) $('#addP').onclick=add; if($('#addP2')) $('#addP2').onclick=add;
   const inp=(id,fn)=>{ const el=$(id); if(el) el.addEventListener('input',e=>{fn(e.target.value);toque(r);save();}); };
   if(view.aba==='cab'){
     inp('#f_setor',v=>r.setor=v); inp('#f_data',v=>r.data=v); inp('#f_hIni',v=>r.hIni=v); inp('#f_hFim',v=>r.hFim=v);
     inp('#f_leitos',v=>r.leitos=v); inp('#f_folha',v=>r.folha=v); inp('#f_resp',v=>r.resp=v); inp('#f_rondista',v=>r.rondista=v);
+    inp('#f_lista',v=>r.leitosLista=v);
+    $('#btnSort').onclick=()=>{ const go=()=>{ const e=sortear(r); if(e){toast(e);return;} r.pacientes.forEach(p=>{ if(p.origemAuto){p.origem='';p.origemAuto=false;} origemAuto(r,p); }); if(r.pacientes.length===1&&!r.pacientes[0].leito){ const ps=proxSorteado(r); if(ps){r.pacientes[0].leito=ps;r.pacientes[0].origem='S';r.pacientes[0].origemAuto=true;} } toque(r); save(true); render(); };
+      if(r.sorteio) confirmar('Refazer o sorteio? O sorteio anterior é substituído e a exportação registra quantas vezes foi refeito.','Refazer',go); else go(); };
     inp('#f_m34mot',v=>{r.m34motivo=v; $('#f_m34mot').classList.toggle('req',r.m34==='NV'&&!v.trim());});
     $('#f_setor').addEventListener('input',()=>{ $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' '; });
     document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;r[g.dataset.seg]=b.dataset.v;toque(r);save();render();});
@@ -504,16 +570,20 @@ function bindRonda(r){
   } else if(view.aba==='fim'){
     inp('#f_enc',v=>r.encaminhamentos=v); inp('#f_obs',v=>r.obs=v);
     if($('#fimAgora')) $('#fimAgora').onclick=()=>{r.hFim=agora();toque(r);save();render();};
-    $('#concluir').onclick=()=>{ const L=pendRonda(r); if(L.length){ confirmar(`Ainda há ${L.length} pendência(s). Concluir mesmo assim?`,'Concluir',()=>{r.status='concluida';if(!r.hFim)r.hFim=agora();toque(r);save(true);render();}); } else { r.status='concluida'; toque(r); save(true); toast('Ronda concluída. Lembre de exportar.'); render(); } };
+    const fechar=()=>{ r.status='concluida'; if(!r.hFim) r.hFim=agora(); toque(r); r.concluidaEm=new Date().toISOString(); save(true); render(); confirmar('Ronda concluída. Exportar agora? Até exportar, ela existe só neste iPad.','Exportar agora',()=>exportCsv([r],true)); };
+    $('#concluir').onclick=()=>{ const L=pendRonda(r); if(L.length) confirmar(`Ainda há ${L.length} pendência(s). Concluir mesmo assim?`,'Concluir',fechar); else fechar(); };
     $('#verReg').onclick=()=>{view.tela='reg';render();window.scrollTo(0,0);};
     $('#expEsta').onclick=()=>exportCsv([r],true);
     $('#delR').onclick=()=>confirmar('Apagar esta ronda do aparelho? '+(r.exportada?'Ela já foi exportada.':'Ela ainda NÃO foi exportada.'),'Apagar',()=>{db.rondas=db.rondas.filter(x=>x!==r);save(true);view={tela:'home'};render();});
   } else {
     const i=+view.aba.slice(1), p=r.pacientes[i];
-    inp('#p_leito',v=>p.leito=v); inp('#p_atend',v=>p.atend=v); inp('#p_obs',v=>p.obsPct=v);
+    inp('#p_leito',v=>{p.leito=v; if(p.origemAuto) p.origem=''; origemAuto(r,p);});
+    $('#p_leito').addEventListener('input',()=>{ document.querySelectorAll('[data-seg="origem"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===p.origem))); });
+    inp('#p_atend',v=>{p.atend=v; const d=duplicados(r,p); $('#dupAviso').textContent=d.length?'Atenção: este nº já foi registrado hoje em '+d.join(', '):'';});
+    inp('#p_omot',v=>{p.origemMot=v;}); inp('#p_obs',v=>p.obsPct=v);
     inp('#p_not',v=>{p.not=v; $('#p_not').classList.toggle('req',pendPct(p).notFalta);});
     inp('#p_ev4',v=>{p.ev4desc=v; $('#p_ev4').classList.toggle('req',!v.trim());});
-    document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=g.dataset.seg;p[k]=p[k]===b.dataset.v?'':b.dataset.v;aplicarAuto(p);toque(r);save();keep(()=>render());});
+    document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=g.dataset.seg;p[k]=p[k]===b.dataset.v?'':b.dataset.v;if(k==='origem')p.origemAuto=false;aplicarAuto(p);toque(r);save();keep(()=>render());});
     document.querySelectorAll('[data-item]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const cod=g.dataset.item;
       p.v[cod]=p.v[cod]===b.dataset.v?'':b.dataset.v; if(!p.v[cod]) delete p.v[cod]; delete p.auto[cod]; if(p.v[cod]!=='NV') delete p.mot[cod];
       if(cod==='M1.3') aplicarAuto(p); toque(r); save(); keep(()=>render(), p.v[cod]==='NV'?cod:null);});
@@ -541,16 +611,16 @@ function paintBottom(){
 /* ---------- Exportação ---------- */
 function csvCell(v){ v=String(v??''); return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
 function linhasCsv(rondas){
-  const head=['id_ronda','versao_instrumento','unidade','data','competencia','turno','setor','rondista','resp_setor','folha_reg005','hora_inicio','hora_fim','leitos_ocupados','status',
-    'pct','leito','n_atendimento','RB','RQ','EN',...ITENS.map(i=>i.cod),'M3.4','M3.4_motivo','motivos_NV','observacoes_NC_NA','auto_preenchidos','EV.1','EV.2','EV.3','EV.4','EV.4_descricao','NOT','obs_paciente',
+  const head=['id_ronda','versao_instrumento','unidade','data','competencia','turno','setor','rondista','resp_setor','folha_reg005','hora_inicio','hora_fim','leitos_ocupados','status','sorteio',
+    'pct','leito','n_atendimento','origem','origem_motivo','RB','RQ','EN',...ITENS.map(i=>i.cod),'M3.4','M3.4_motivo','motivos_NV','observacoes_NC_NA','auto_preenchidos','EV.1','EV.2','EV.3','EV.4','EV.4_descricao','NOT','obs_paciente',
     'itens_em_branco','itens_NV','encaminhamentos','obs_ronda'];
   const out=[head];
   rondas.slice().sort((a,b)=>(a.data+a.hIni).localeCompare(b.data+b.hIni)).forEach(r=>{
     r.pacientes.forEach((p,k)=>{
       const mot=ITENS.filter(i=>p.v[i.cod]==='NV').map(i=>i.cod+': '+(p.mot[i.cod]||'sem motivo')).join(' | ');
       const obs=ITENS.filter(i=>(p.v[i.cod]==='NC'||p.v[i.cod]==='NA')&&(p.obs[i.cod]||'').trim()).map(i=>i.cod+': '+p.obs[i.cod]).join(' | ');
-      out.push([r.id,r.versao,r.unidade,brData(r.data),(r.data||'').slice(0,7).replace('-',''),r.turno,r.setor,r.rondista,r.resp,r.folha,r.hIni,r.hFim,r.leitos,r.status,
-        p.pos,p.leito,p.atend,p.RB,p.RQ,p.EN,...ITENS.map(i=>p.v[i.cod]||''),k===0?r.m34:'',k===0?r.m34motivo:'',mot,obs,Object.keys(p.auto).join(' '),
+      out.push([r.id,r.versao,r.unidade,brData(r.data),(r.data||'').slice(0,7).replace('-',''),r.turno,r.setor,r.rondista,r.resp,r.folha,r.hIni,r.hFim,r.leitos,r.status,textoSorteio(r),
+        p.pos,p.leito,p.atend,({S:'sorteado',R:'reserva',E:'escolha'})[p.origem]||'',p.origemMot||'',p.RB,p.RQ,p.EN,...ITENS.map(i=>p.v[i.cod]||''),k===0?r.m34:'',k===0?r.m34motivo:'',mot,obs,Object.keys(p.auto).join(' '),
         p.ev['EV.1'],p.ev['EV.2'],p.ev['EV.3'],p.ev['EV.4'],p.ev4desc,p.not,p.obsPct,
         ITENS.filter(i=>!p.v[i.cod]).length,ITENS.filter(i=>p.v[i.cod]==='NV').length,k===0?r.encaminhamentos:'',k===0?r.obs:'']);
     });
