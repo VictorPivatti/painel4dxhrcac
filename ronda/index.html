@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Ronda NQSP</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -23,22 +24,6 @@
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --r:10px; color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#111716; --surface:#1a2221; --ink:#e6ecea; --muted:#9aa8a4; --line:#2e3a38;
-    --accent:#4fb3b0; --accent-ink:#0c1514; --accent-soft:#1d3433;
-    --c:#5cc98a; --c-soft:#183324; --nc:#ff8a80; --nc-soft:#3d1d1a;
-    --na:#a7b3b0; --na-soft:#262f2e; --nv:#f0b54a; --nv-soft:#3a2d12;
-    --warn:#f0b54a; --warn-soft:#332810; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-    --bg:#111716; --surface:#1a2221; --ink:#e6ecea; --muted:#9aa8a4; --line:#2e3a38;
-    --accent:#4fb3b0; --accent-ink:#0c1514; --accent-soft:#1d3433;
-    --c:#5cc98a; --c-soft:#183324; --nc:#ff8a80; --nc-soft:#3d1d1a;
-    --na:#a7b3b0; --na-soft:#262f2e; --nv:#f0b54a; --nv-soft:#3a2d12;
-    --warn:#f0b54a; --warn-soft:#332810; color-scheme:dark;
-}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--font);-webkit-text-size-adjust:100%}
@@ -47,7 +32,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
-.top{position:sticky;top:0;z-index:20;background:var(--accent);color:var(--accent-ink);
+.stick{position:sticky;top:0;z-index:20;background:var(--bg)}
+.top{background:var(--accent);color:var(--accent-ink);
   padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
   display:flex;align-items:center;gap:12px}
 .top h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -85,6 +71,11 @@ textarea{resize:vertical;min-height:80px}
 .chip{font-family:var(--mono);font-weight:700;border-radius:6px;padding:6px 10px;background:var(--accent-soft);border:1px solid var(--accent)}
 .chip.res{background:var(--bg);border-style:dashed;color:var(--muted)}
 .chip.usado{opacity:.45;text-decoration:line-through}
+.lchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:4px 4px 4px 10px}
+.lchip b{font-family:var(--mono)}
+.lchip small{font-size:11px;color:var(--muted)}
+.lchip button{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-height:40px;padding:4px 10px;font-size:13px;font-weight:600}
+.lchip.usado{opacity:.55}
 .aviso{font-size:13px;color:var(--nc);font-weight:600}
 
 .list{display:flex;flex-direction:column;gap:8px}
@@ -96,7 +87,8 @@ textarea{resize:vertical;min-height:80px}
 .pill.ok{background:var(--c-soft);color:var(--c)}
 .pill.exp{background:var(--na-soft);color:var(--na)}
 
-.tabs{display:flex;gap:6px;overflow-x:auto;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:15;background:var(--bg);padding-block:8px;margin-top:-8px}
+.tabs{display:flex;gap:6px;overflow-x:auto;background:var(--bg);border-bottom:1px solid var(--line);padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));-webkit-overflow-scrolling:touch}
+.tabs:empty{display:none}
 .tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;min-height:44px;font-weight:600;display:flex;flex-direction:column;align-items:center;line-height:1.15}
 .tabs button small{font-weight:500;font-size:11px;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -166,16 +158,19 @@ textarea{resize:vertical;min-height:80px}
 </style>
 </head>
 <body>
+<div class="stick">
 <header class="top">
   <h1 id="ttl">Ronda NQSP <span class="sub" id="ttlsub"></span></h1>
   <button id="btnHome" hidden>Rondas</button>
 </header>
+<nav class="tabs" id="tabs" role="tablist"></nav>
+</div>
 <main class="wrap" id="app"></main>
 <div class="bottom" id="bottom" hidden></div>
 
 <script>
 'use strict';
-const APP_VERSION = '1.2 · 22/10/2026';
+const APP_VERSION = '1.3 · 23/10/2026';
 const MAX_PCT = 16;
 const FORM_VERSION = 'REG005SEG-v00/folha-v03.1';
 const STORE_KEY = 'rondaNQSP.v1';
@@ -239,12 +234,25 @@ const EVENTOS = [
 ];
 
 /* ---------- Estado e armazenamento ---------- */
-let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir', setores:{I:SETORES.slice(), II:[]}}};
+let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir', setores:{I:SETORES.slice(), II:[]}, leitos:{}, ultimaExport:''}};
 let view = {tela:'home', id:null, aba:'cab', crit:{}};
-function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); if(!db.cfg.setores) db.cfg.setores={I:SETORES.slice(),II:[]}; } }catch(e){ console.warn('load',e); } }
+function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); if(!db.cfg.setores) db.cfg.setores={I:SETORES.slice(),II:[]}; if(!db.cfg.leitos) db.cfg.leitos={}; } }catch(e){ console.warn('load',e); } }
 let saveT=null, saveOk=true;
-function save(now){ const f=()=>{ saveT=null; try{ localStorage.setItem(STORE_KEY,JSON.stringify(db)); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now){ clearTimeout(saveT); f(); } else if(!saveT) saveT=setTimeout(f,300); }
-try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+function save(now){ const f=()=>{ saveT=null; const txt=JSON.stringify(db); IDB.put(txt); try{ localStorage.setItem(STORE_KEY,txt); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now){ clearTimeout(saveT); f(); } else if(!saveT) saveT=setTimeout(f,300); }
+let protegido=null;
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().then(v=>{protegido=v; if(view.tela==='home') render();}).catch(()=>{}); }catch(e){}
+/* Cópia espelhada no IndexedDB: se o localStorage vier vazio ou mais antigo, recupera daqui */
+const IDB={ db:null,
+  abrir(){ return new Promise((ok,er)=>{ try{ const q=indexedDB.open('rondaNQSP',1); q.onupgradeneeded=()=>q.result.createObjectStore('kv'); q.onsuccess=()=>{this.db=q.result;ok(q.result);}; q.onerror=()=>er(q.error);}catch(e){er(e);} }); },
+  async put(v){ try{ const d=this.db||await this.abrir(); d.transaction('kv','readwrite').objectStore('kv').put(v,'db'); }catch(e){} },
+  async get(){ try{ const d=this.db||await this.abrir(); return await new Promise(ok=>{ const q=d.transaction('kv').objectStore('kv').get('db'); q.onsuccess=()=>ok(q.result||null); q.onerror=()=>ok(null); }); }catch(e){ return null; } } };
+const ultimaAlt=d=>Math.max(0,...(d.rondas||[]).map(r=>Date.parse(r.alterada||0)||0));
+async function recuperarIDB(){ const t=await IDB.get(); if(!t) return; try{ const d=JSON.parse(t); if(!d||!Array.isArray(d.rondas)) return;
+  const ids=new Set(db.rondas.map(r=>r.id)); const faltam=d.rondas.filter(r=>!ids.has(r.id));
+  let mud=0; faltam.forEach(r=>{db.rondas.push(r);mud++;});
+  d.rondas.forEach(r=>{ const i=db.rondas.findIndex(x=>x.id===r.id); if(i>=0&&(r.alterada||'')>(db.rondas[i].alterada||'')){ db.rondas[i]=r; mud++; } });
+  if(d.cfg&&d.cfg.leitos) db.cfg.leitos=Object.assign({},d.cfg.leitos,db.cfg.leitos);
+  if(mud){ db.rondas.sort((a,b)=>(b.criada||'').localeCompare(a.criada||'')); save(true); toast(mud+' ronda(s) recuperada(s) da cópia de segurança.'); render(); } }catch(e){} }
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -288,36 +296,64 @@ function aplicarAuto(p){
 /* ---------- Sorteio de leitos ---------- */
 function parseLista(t){ return [...new Set(String(t||'').split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean))]; }
 function rand(n){ const a=new Uint32Array(1); (self.crypto||window.crypto).getRandomValues(a); return a[0]%n; }
+// "1-20", "1A-1D", "101A-110B" (grade), "UTI-01" etc.
+function expandLeitos(t){
+  const out=[]; const src=String(t||'').toUpperCase().replace(/\s*-\s*/g,'-').split(/[\s,;]+/).filter(Boolean);
+  const re=/^([A-Z]*)(\d+)([A-Z]?)-([A-Z]*)(\d+)([A-Z]?)$/;
+  src.forEach(tok=>{ const m=tok.match(re);
+    if(!m||m[1]!==m[4]){ out.push(tok); return; }
+    const n1=+m[2], n2=+m[5], w=m[2].length, l1=m[3], l2=m[6];
+    if(n2<n1||n2-n1>300){ out.push(tok); return; }
+    const num=n=>m[2].startsWith('0')?String(n).padStart(w,'0'):String(n);
+    for(let n=n1;n<=n2;n++){
+      if(l1&&l2){ for(let c=l1.charCodeAt(0);c<=l2.charCodeAt(0);c++) out.push(m[1]+num(n)+String.fromCharCode(c)); }
+      else if(!l1&&!l2) out.push(m[1]+num(n));
+      else { out.push(tok); return; }
+    }
+  });
+  return [...new Set(out)].slice(0,400);
+}
+const chaveSetor=r=>r.unidade+'|'+(r.setor||'').trim();
+function leitosSetor(r){ return db.cfg.leitos[chaveSetor(r)]||[]; }
+function poolSorteio(r,s){
+  if(s.base==='cadastro') return (s.pool||leitosSetor(r)).slice();
+  if(s.base==='lista') return parseLista(r.leitosLista);
+  return Array.from({length:s.N},(_,i)=>String(i+1));
+}
+function carimbo(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function ativos(s){ return s.fila.filter(x=>!s.st[x]); }
+function puxar(r,k){ const s=r.sorteio; const ja=new Set(s.fila); const pool=poolSorteio(r,s).filter(x=>!ja.has(x)); let n=0; const novos=[];
+  while(n<k&&pool.length){ const x=pool.splice(rand(pool.length),1)[0]; s.fila.push(x); novos.push(x); n++; } return novos; }
 function sortear(r){
-  const lista=parseLista(r.leitosLista); let base, pool;
-  if(lista.length){ base='lista'; pool=lista.slice(); r.leitos=String(lista.length); }
-  else { const n=parseInt(r.leitos,10); if(!(n>0)) return 'Informe os leitos ocupados (lista ou número) antes de sortear.'; base='posicao'; pool=Array.from({length:n},(_,i)=>String(i+1)); }
-  const N=pool.length, k=Math.min(6,N), out=[];
-  for(let i=0;i<k;i++){ const j=rand(pool.length); out.push(pool.splice(j,1)[0]); }
+  const cad=leitosSetor(r); let base, N, pool;
+  if(cad.length){ base='cadastro'; pool=cad.slice(); N=cad.length; }
+  else { const n=parseInt(r.leitos,10); if(!(n>0)) return 'Cadastre os leitos do setor ou informe o número de leitos ocupados.'; base='posicao'; N=n; }
   const ref=r.sorteio?(r.sorteio.refeito||0)+1:0;
-  const dd=new Date(); r.sorteio={em:dd.getFullYear()+'-'+pad(dd.getMonth()+1)+'-'+pad(dd.getDate())+'T'+pad(dd.getHours())+':'+pad(dd.getMinutes()),base,N,sorteados:out.slice(0,Math.min(4,N)),reservas:out.slice(4),refeito:ref};
-  return null;
+  r.sorteio={em:carimbo(),base,N,pool,fila:[],st:{},mot:{},subst:{},refeito:ref,extras:0};
+  puxar(r,4); return null;
 }
-function sortearMais(r,k){
-  const s=r.sorteio; if(!s) return 0;
-  const ja=new Set([...s.sorteados,...s.reservas]);
-  const pool=(s.base==='lista'?parseLista(r.leitosLista):Array.from({length:s.N},(_,i)=>String(i+1))).filter(x=>!ja.has(x));
-  let n=0; while(n<k&&pool.length){ s.sorteados.push(pool.splice(rand(pool.length),1)[0]); n++; }
-  s.extras=(s.extras||0)+n; return n;
-}
+function sortearMais(r,k){ if(!r.sorteio) return 0; const n=puxar(r,k).length; r.sorteio.extras=(r.sorteio.extras||0)+n; return n; }
+// vazio: leito sem paciente, troca por outro sorteado (continua aleatório entre ocupados)
+// indisp: paciente não pode ser avaliado, troca por outro e o substituto fica como "reserva" com motivo
+function marcarLeito(r,x,tipo,motivo){ const s=r.sorteio; s.st[x]=tipo; if(motivo) s.mot[x]=motivo; const nv=puxar(r,1); if(nv[0]&&tipo==='indisp') s.subst[nv[0]]=x; return nv[0]||''; }
 function rotuloLeito(r,x){ return r.sorteio&&r.sorteio.base==='posicao'?x+'º ocupado':'Leito '+x; }
-function textoSorteio(r){ const s=r.sorteio; if(!s) return ''; return `${s.base==='lista'?'lista':'posição no censo'} N=${s.N} | sorteados: ${s.sorteados.join(', ')} | reservas: ${s.reservas.join(', ')||'-'} | extras ${s.extras||0} | refeito ${s.refeito}x | ${s.em.slice(0,16).replace('T',' ')}`; }
+function textoSorteio(r){ const s=r.sorteio; if(!s) return ''; if(!s.fila) return 'versão antiga'; const vz=s.fila.filter(x=>s.st[x]==='vazio'), ind=s.fila.filter(x=>s.st[x]==='indisp');
+  return `${({cadastro:'leitos cadastrados',lista:'lista',posicao:'posição no censo'})[s.base]} N=${s.N} | sorteados: ${ativos(s).join(', ')} | vazios: ${vz.join(', ')||'-'} | indisponíveis: ${ind.map(x=>x+(s.mot[x]?' ('+s.mot[x]+')':'')).join(', ')||'-'} | extras ${s.extras||0} | refeito ${s.refeito}x | ${s.em.replace('T',' ')}`; }
 function origemAuto(r,p){
-  if(!r.sorteio||r.sorteio.base!=='lista'||!p.leito.trim()) return;
+  const s=r.sorteio; if(!s||!s.fila||!p.leito.trim()) return;
   if(p.origem&&!p.origemAuto) return;
-  const l=p.leito.trim(); const o=r.sorteio.sorteados.includes(l)?'S':(r.sorteio.reservas.includes(l)?'R':'E');
-  p.origem=o; p.origemAuto=true;
+  const l=p.leito.trim().toUpperCase(); const at=ativos(s).map(x=>x.toUpperCase());
+  if(s.base==='posicao'){ return; }
+  if(at.includes(l)){ const orig=Object.keys(s.subst).find(k=>k.toUpperCase()===l); if(orig){ p.origem='R'; p.origemMot='substitui leito '+s.subst[orig]+(s.mot[s.subst[orig]]?': '+s.mot[s.subst[orig]]:''); } else p.origem='S'; }
+  else p.origem='E';
+  p.origemAuto=true;
 }
 function proxSorteado(r){
-  if(!r.sorteio||r.sorteio.base!=='lista') return '';
-  const usados=r.pacientes.map(p=>p.leito.trim());
-  return r.sorteio.sorteados.find(x=>!usados.includes(x))||'';
+  const s=r.sorteio; if(!s||!s.fila) return '';
+  const usados=r.pacientes.map(p=>p.leito.trim().toUpperCase());
+  return ativos(s).find(x=>!usados.includes(x.toUpperCase()))||'';
 }
+function novoComLeito(r,np){ const ps=proxSorteado(r); if(ps){ np.leito=ps; np.origemAuto=true; np.origem=''; origemAuto(r,np); } }
 /* ---------- Atendimento duplicado no mesmo dia ---------- */
 function duplicados(r,p){
   const a=(p.atend||'').trim(); if(!a) return [];
@@ -360,6 +396,7 @@ function pendRonda(r){
 /* ---------- Render ---------- */
 function render(){
   $('#btnHome').hidden = view.tela==='home';
+  if(view.tela!=='ronda') $('#tabs').innerHTML='';
   if(view.tela==='home') return renderHome();
   const r=ronda(); if(!r){ view={tela:'home'}; return renderHome(); }
   $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' ';
@@ -405,7 +442,7 @@ function renderHome(){
         <div class="field"><label for="cfgS1">Setores da Unidade I (um por linha)</label><textarea id="cfgS1" rows="5">${esc((db.cfg.setores.I||[]).join('\n'))}</textarea></div>
         <div class="field"><label for="cfgS2">Setores da Unidade II (um por linha)</label><textarea id="cfgS2" rows="5" placeholder="Cadastre aqui os setores do HRCAC II">${esc((db.cfg.setores.II||[]).join('\n'))}</textarea></div>
       </div>
-      <p style="margin:0;font-size:12px;color:var(--muted)">Versão do app ${APP_VERSION} · instrumento ${FORM_VERSION} · ${navigator.onLine?'online':'offline'}</p>
+      <p style="margin:0;font-size:12px;color:var(--muted)">Versão do app ${APP_VERSION} · instrumento ${FORM_VERSION} · ${navigator.onLine?'online':'offline'} · armazenamento ${protegido===true?'protegido pelo sistema':(protegido===false?'sem proteção do sistema (exporte com frequência)':'verificando')} · última exportação: ${db.cfg.ultimaExport?new Date(db.cfg.ultimaExport).toLocaleString('pt-BR'):'nunca'}</p>
     </section>`;
   $('#bottom').hidden=true;
   $('#nova').onclick=novaRonda;
@@ -427,8 +464,9 @@ function renderRonda(r){
   const tabs=[['cab','Cabeçalho',pendRonda({...r,pacientes:[]}).length?'pendente':'ok'],
     ...r.pacientes.map((p,i)=>{const q=pendPct(p);const feito=ITENS.length-q.vaz.length;return ['p'+i,p.pos+(p.leito?' · L'+p.leito:''),feito+'/'+ITENS.length];}),
     ['fim','Fechamento',pendRonda(r).length+' pend.']];
-  let html=`<nav class="tabs" role="tablist">${tabs.map(t=>`<button role="tab" data-aba="${t[0]}" aria-selected="${view.aba===t[0]}">${esc(t[1])}<small>${esc(t[2])}</small></button>`).join('')}
-    ${r.pacientes.length<MAX_PCT?`<button id="addP" aria-selected="false">+ Paciente<small>${r.pacientes.length<4?'folha 1 (até 4)':'folha '+(Math.floor(r.pacientes.length/4)+1)+' do REG 005'}</small></button>`:''}</nav>`;
+  $('#tabs').innerHTML=`${tabs.map(t=>`<button role="tab" data-aba="${t[0]}" aria-selected="${view.aba===t[0]}">${esc(t[1])}<small>${esc(t[2])}</small></button>`).join('')}
+    ${r.pacientes.length<MAX_PCT?`<button id="addP" aria-selected="false">+ Paciente<small>${r.pacientes.length<4?'folha 1 (até 4)':'folha '+(Math.floor(r.pacientes.length/4)+1)+' do REG 005'}</small></button>`:''}`;
+  let html='';
   if(view.aba==='cab') html+=htmlCab(r);
   else if(view.aba==='fim') html+=htmlFim(r);
   else { const i=+view.aba.slice(1); html+=htmlPct(r,r.pacientes[i],i); }
@@ -462,16 +500,32 @@ function htmlCab(r){
         ${r.m34==='NV'||r.m34==='NC'?`<div class="extra"><input id="f_m34mot" class="${r.m34==='NV'&&!r.m34motivo.trim()?'req':''}" placeholder="${r.m34==='NV'?'Motivo do NV (obrigatório)':'O que estava em desacordo'}" value="${esc(r.m34motivo)}"></div>`:''}
       </div>
     </section>
-    <section class="panel"><h2>Seleção dos pacientes (sorteio)</h2>
-      <div class="field"><label for="f_lista">Leitos ocupados agora (opcional: números separados por vírgula ou espaço)</label><input id="f_lista" value="${esc(r.leitosLista||'')}" placeholder="ex.: 1, 2, 4, 5, 7, 9, 10, 12" autocomplete="off"></div>
-      <p style="margin:0;font-size:13px;color:var(--muted)">Com a lista, o app sorteia os leitos. Só com o número de leitos ocupados, sorteia posições na ordem do censo (ex.: 3º ocupado). Sorteia 4 e mais 2 reservas, para quando um paciente não puder ser avaliado.</p>
-      ${r.sorteio?`<div class="chips">${r.sorteio.sorteados.map(x=>`<span class="chip${r.pacientes.some(p=>p.leito.trim()===x)?' usado':''}">${esc(rotuloLeito(r,x))}</span>`).join('')}${r.sorteio.reservas.map(x=>`<span class="chip res">reserva: ${esc(rotuloLeito(r,x))}</span>`).join('')}</div>
-        <p style="margin:0;font-size:12px;color:var(--muted)">Sorteado em ${esc(r.sorteio.em.slice(11,16))}${r.sorteio.refeito?` · refeito ${r.sorteio.refeito} vez(es), fica registrado na exportação`:''}</p>`:''}
-      <div class="btns"><button class="btn${r.sorteio?'':' primary'}" id="btnSort">${r.sorteio?'Refazer sorteio':'Sortear 4 + 2 reservas'}</button>${r.sorteio?'<button class="btn" id="btnMais">Sortear mais 4 (amostra extra)</button>':''}</div>
-    </section>
+    ${htmlSorteio(r)}
     <div class="btns"><button class="btn primary" data-goto="p0">Começar pelo P1</button></div>`;
 }
 
+function htmlSorteio(r){
+  const cad=leitosSetor(r), s=r.sorteio&&r.sorteio.fila?r.sorteio:null, edit=view.editLeitos||(!cad.length&&!s);
+  const usados=r.pacientes.map(p=>p.leito.trim().toUpperCase());
+  const chip=x=>{ const st=s.st[x]; const us=usados.includes(x.toUpperCase());
+    if(st) return `<span class="chip res">${esc(rotuloLeito(r,x))} · ${st==='vazio'?'vazio':'indisponível'}</span>`;
+    return `<span class="lchip${us?' usado':''}"><b>${esc(rotuloLeito(r,x))}</b>${s.subst[x]?'<small>subst. '+esc(s.subst[x])+'</small>':''}${us?'<small>avaliado</small>':`<button type="button" data-vazio="${esc(x)}">Vazio</button><button type="button" data-indisp="${esc(x)}">Indisponível</button>`}</span>`; };
+  return `<section class="panel"><h2>Seleção dos pacientes (sorteio)</h2>
+    ${!setorOk(r)?'<p style="margin:0;color:var(--muted)">Escolha o setor acima para usar os leitos cadastrados.</p>':''}
+    ${setorOk(r)&&edit?`<div class="field"><label for="f_cadL">Leitos do setor ${esc(r.setor)} · cadastro feito uma vez, vale para as próximas rondas</label>
+        <textarea id="f_cadL" rows="3" placeholder="ex.: 1A-1C, 2A-2C, 3-12  ou  101-118  ou  UTI01-UTI10">${esc(view.cadTxt??cad.join(', '))}</textarea>
+        <span id="cadPrev" style="font-size:13px;color:var(--muted)">${prevLeitos(view.cadTxt??cad.join(', '))}</span></div>
+      <div class="btns"><button class="btn primary" id="btnCadL">Salvar leitos do setor</button>${cad.length?'<button class="btn" id="btnCadX">Cancelar</button>':''}</div>`:''}
+    ${setorOk(r)&&!edit?`<p style="margin:0;font-size:13px;color:var(--muted)">${cad.length?cad.length+' leitos cadastrados neste setor. ':''}O sorteio usa todos os leitos do setor. Caiu num leito vazio, toque em <b>Vazio</b> e o app sorteia outro. Paciente sem condição de ser avaliado, toque em <b>Indisponível</b> e informe o motivo.</p>`:''}
+    ${s?`<div class="chips">${s.fila.map(chip).join('')}</div>
+      <p style="margin:0;font-size:12px;color:var(--muted)">Sorteado às ${esc(s.em.slice(11,16))}${s.refeito?` · refeito ${s.refeito} vez(es), fica registrado na exportação`:''}${s.base==='posicao'?' · sem leitos cadastrados: posição na ordem do censo':''}</p>`:''}
+    <div class="btns">${!edit&&!s?`<button class="btn primary" id="btnSort">Sortear 4 leitos</button>`:''}
+      ${s?'<button class="btn" id="btnMais">Sortear mais 4</button><button class="btn" id="btnSort">Refazer sorteio</button>':''}
+      ${setorOk(r)&&!edit?'<button class="btn" id="btnEditL">'+(cad.length?'Editar leitos do setor':'Cadastrar leitos do setor')+'</button>':''}</div>
+  </section>`;
+}
+function setorOk(r){ return !!(r.setor||'').trim(); }
+function prevLeitos(t){ const l=expandLeitos(t); return l.length?`${l.length} leitos: ${esc(l.slice(0,24).join(', '))}${l.length>24?' ...':''}`:'Use vírgulas e intervalos: 1-12, 1A-1C, 101A-110B.'; }
 function htmlPct(r,p,i){
   const pre=`<section class="panel"><h2>${p.pos} · dados do paciente</h2>
     <div class="row">
@@ -565,19 +619,26 @@ function renderReg(r){
 function bindRonda(r){
   document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.aba;render();window.scrollTo(0,0);});
   document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{view.aba=b.dataset.goto;render();window.scrollTo(0,0);});
-  const add=()=>{ if(r.pacientes.length>=MAX_PCT) return; const np=novoPct(r.pacientes.length+1); let ps=proxSorteado(r);
-    if(!ps&&r.sorteio&&r.pacientes.length>=r.sorteio.sorteados.length){ if(sortearMais(r,4)){ ps=proxSorteado(r); toast('Sorteados mais leitos para a amostra extra.'); } else if(r.sorteio) toast('Todos os leitos ocupados já foram sorteados.'); } if(ps){np.leito=ps;np.origem='S';np.origemAuto=true;} r.pacientes.push(np); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
+  const add=()=>{ if(r.pacientes.length>=MAX_PCT) return; const np=novoPct(r.pacientes.length+1);
+    if(r.sorteio&&r.sorteio.fila&&!proxSorteado(r)){ if(sortearMais(r,4)) toast('Sorteados mais leitos para a amostra extra.'); else toast('Todos os leitos do setor já foram sorteados.'); }
+    novoComLeito(r,np); r.pacientes.push(np); toque(r); save(); view.aba='p'+(r.pacientes.length-1); render(); window.scrollTo(0,0); };
   if($('#addP')) $('#addP').onclick=add; if($('#addP2')) $('#addP2').onclick=add;
   const inp=(id,fn)=>{ const el=$(id); if(el) el.addEventListener('input',e=>{fn(e.target.value);toque(r);save();}); };
   if(view.aba==='cab'){
     inp('#f_setor',v=>r.setor=v); inp('#f_data',v=>r.data=v); inp('#f_hIni',v=>r.hIni=v); inp('#f_hFim',v=>r.hFim=v);
     inp('#f_leitos',v=>r.leitos=v); inp('#f_folha',v=>r.folha=v); inp('#f_resp',v=>r.resp=v); inp('#f_rondista',v=>r.rondista=v);
-    inp('#f_lista',v=>r.leitosLista=v);
-    if($('#btnMais')) $('#btnMais').onclick=()=>{ const n=sortearMais(r,4); if(!n){toast('Não há mais leitos ocupados para sortear.');return;} toque(r); save(true); render(); toast(n+' leito(s) a mais sorteado(s).'); };
-    $('#btnSort').onclick=()=>{ const go=()=>{ const e=sortear(r); if(e){toast(e);return;} r.pacientes.forEach(p=>{ if(p.origemAuto){p.origem='';p.origemAuto=false;} origemAuto(r,p); }); if(r.pacientes.length===1&&!r.pacientes[0].leito){ const ps=proxSorteado(r); if(ps){r.pacientes[0].leito=ps;r.pacientes[0].origem='S';r.pacientes[0].origemAuto=true;} } toque(r); save(true); render(); };
-      if(r.sorteio) confirmar('Refazer o sorteio? O sorteio anterior é substituído e a exportação registra quantas vezes foi refeito.','Refazer',go); else go(); };
+    const sor=()=>{ const e=sortear(r); if(e){toast(e);return;} r.pacientes.forEach(p=>{ if(p.origemAuto||!p.origem){p.origem='';p.origemAuto=true;} if(!p.leito.trim()&&r.pacientes.length===1) novoComLeito(r,p); else origemAuto(r,p); }); toque(r); save(true); render(); };
+    if($('#btnSort')) $('#btnSort').onclick=()=>{ if(r.sorteio&&r.sorteio.fila) confirmar('Refazer o sorteio? O sorteio anterior é substituído e a exportação registra quantas vezes foi refeito.','Refazer',sor); else sor(); };
+    if($('#btnMais')) $('#btnMais').onclick=()=>{ const n=sortearMais(r,4); if(!n){toast('Todos os leitos do setor já foram sorteados.');return;} toque(r); save(true); render(); toast(n+' leito(s) a mais sorteado(s).'); };
+    if($('#btnEditL')) $('#btnEditL').onclick=()=>{ view.editLeitos=true; view.cadTxt=null; keep(()=>render()); };
+    if($('#btnCadX')) $('#btnCadX').onclick=()=>{ view.editLeitos=false; view.cadTxt=null; keep(()=>render()); };
+    if($('#f_cadL')) $('#f_cadL').addEventListener('input',e=>{ view.cadTxt=e.target.value; $('#cadPrev').innerHTML=prevLeitos(e.target.value); });
+    if($('#btnCadL')) $('#btnCadL').onclick=()=>{ const l=expandLeitos($('#f_cadL').value); if(!l.length){toast('Nenhum leito reconhecido.');return;} db.cfg.leitos[chaveSetor(r)]=l; view.editLeitos=false; view.cadTxt=null; save(true); toast(l.length+' leitos salvos para '+r.setor+'.'); keep(()=>render()); };
+    document.querySelectorAll('[data-vazio]').forEach(b=>b.onclick=()=>{ const x=b.dataset.vazio; const nv=marcarLeito(r,x,'vazio'); toque(r); save(true); keep(()=>render()); toast(nv?'Leito '+x+' vazio. Sorteado: '+nv:'Leito '+x+' vazio. Não há mais leitos para sortear.'); });
+    document.querySelectorAll('[data-indisp]').forEach(b=>b.onclick=()=>{ const x=b.dataset.indisp; pedirTexto('Por que o paciente do leito '+x+' não pode ser avaliado?','ex.: em procedimento, isolamento, recusou',m=>{ const nv=marcarLeito(r,x,'indisp',m); toque(r); save(true); keep(()=>render()); toast(nv?'Substituto sorteado: '+nv:'Não há mais leitos para sortear.'); }); });
     inp('#f_m34mot',v=>{r.m34motivo=v; $('#f_m34mot').classList.toggle('req',r.m34==='NV'&&!v.trim());});
     $('#f_setor').addEventListener('input',()=>{ $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' '; });
+    $('#f_setor').addEventListener('change',()=>{ view.editLeitos=false; view.cadTxt=null; const y=window.scrollY; render(); window.scrollTo(0,y); });
     document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;r[g.dataset.seg]=b.dataset.v;toque(r);save();render();});
     $('[data-m34]').onclick=e=>{const b=e.target.closest('button');if(!b)return;r.m34=r.m34===b.dataset.v?'':b.dataset.v;toque(r);save();render();};
   } else if(view.aba==='fim'){
@@ -654,7 +715,7 @@ async function exportCsv(rondas,marcar){
   const txt='﻿'+linhasCsv(rondas).map(l=>l.map(csvCell).join(';')).join('\r\n');
   const d=new Date(); const nome=`ronda-nqsp_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
   const ok=await entregar(nome,txt,'text/csv');
-  if(ok&&marcar){ confirmar('O arquivo foi salvo (no Arquivos, Drive ou Skybox)? Se sim, as rondas ficam marcadas como exportadas.','Sim, salvei',()=>{rondas.forEach(r=>r.exportada=true);save(true);render();}); }
+  if(ok&&marcar){ confirmar('O arquivo foi salvo (no Arquivos, Drive ou Skybox)? Se sim, as rondas ficam marcadas como exportadas.','Sim, salvei',()=>{rondas.forEach(r=>r.exportada=true);db.cfg.ultimaExport=new Date().toISOString();save(true);render();}); }
 }
 async function exportJson(){
   const d=new Date();
@@ -674,12 +735,17 @@ function confirmar(msg,ok,fn){
   const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="box" role="dialog" aria-modal="true"><p>${esc(msg)}</p><div class="btns" style="justify-content:flex-end"><button class="btn" data-x>Cancelar</button><button class="btn primary" data-ok>${esc(ok)}</button></div></div>`;
   document.body.appendChild(m); m.querySelector('[data-x]').onclick=()=>m.remove(); m.querySelector('[data-ok]').onclick=()=>{m.remove();fn();}; m.querySelector('[data-ok]').focus();
 }
+function pedirTexto(msg,ph,fn){
+  const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="box" role="dialog" aria-modal="true"><p>${esc(msg)}</p><input id="pt_in" style="min-height:44px;border:1px solid var(--line);border-radius:8px;padding:8px 10px" placeholder="${esc(ph)}"><div class="btns" style="justify-content:flex-end"><button class="btn" data-x>Cancelar</button><button class="btn primary" data-ok>Confirmar</button></div></div>`;
+  document.body.appendChild(m); const i=m.querySelector('#pt_in'); i.focus();
+  m.querySelector('[data-x]').onclick=()=>m.remove(); m.querySelector('[data-ok]').onclick=()=>{ const v=i.value.trim(); if(!v){i.style.borderColor='var(--nc)';return;} m.remove(); fn(v); };
+}
 let toastT; function toast(t){ let el=$('.toast'); if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);} el.textContent=t; clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3500); }
 
 $('#btnHome').onclick=()=>{view={tela:'home'};render();window.scrollTo(0,0);};
 window.addEventListener('pagehide',()=>save(true));
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') save(true); });
-load(); render();
+load(); render(); recuperarIDB();
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
