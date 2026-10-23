@@ -170,7 +170,7 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 'use strict';
-const APP_VERSION = '1.3 · 23/10/2026';
+const APP_VERSION = '1.4 · 23/10/2026';
 const MAX_PCT = 16;
 const FORM_VERSION = 'REG005SEG-v00/folha-v03.1';
 const STORE_KEY = 'rondaNQSP.v1';
@@ -234,11 +234,51 @@ const EVENTOS = [
 ];
 
 /* ---------- Estado e armazenamento ---------- */
-let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir', setores:{I:SETORES.slice(), II:[]}, leitos:{}, ultimaExport:''}};
+let db = {rondas:[], cfg:{rondista:'Victor Matheus Sanches Pivatti', m34:'repetir', setores:{I:SETORES.slice(), II:[]}, leitos:{}, ultimaExport:'', syncUrl:'', syncCod:'', ultimaSync:''}, apagar:[]};
 let view = {tela:'home', id:null, aba:'cab', crit:{}};
-function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); if(!db.cfg.setores) db.cfg.setores={I:SETORES.slice(),II:[]}; if(!db.cfg.leitos) db.cfg.leitos={}; } }catch(e){ console.warn('load',e); } }
+function load(){ try{ const s=localStorage.getItem(STORE_KEY); if(s){ const d=JSON.parse(s); if(d&&Array.isArray(d.rondas)) db=Object.assign(db,d,{cfg:Object.assign({},db.cfg,d.cfg||{})}); if(!db.cfg.setores) db.cfg.setores={I:SETORES.slice(),II:[]}; if(!db.cfg.leitos) db.cfg.leitos={}; if(!Array.isArray(db.apagar)) db.apagar=[]; } }catch(e){ console.warn('load',e); } }
 let saveT=null, saveOk=true;
-function save(now){ const f=()=>{ saveT=null; const txt=JSON.stringify(db); IDB.put(txt); try{ localStorage.setItem(STORE_KEY,txt); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); }; if(now){ clearTimeout(saveT); f(); } else if(!saveT) saveT=setTimeout(f,300); }
+function save(now){ const f=()=>{ saveT=null; const txt=JSON.stringify(db); IDB.put(txt); try{ localStorage.setItem(STORE_KEY,txt); saveOk=true; }catch(e){ saveOk=false; toast('Não foi possível salvar no aparelho. Exporte agora.'); } paintBottom(); agendarSync(); }; if(now){ clearTimeout(saveT); f(); } else if(!saveT) saveT=setTimeout(f,300); }
+/* ---------- Envio automático para a planilha Google ---------- */
+let syncT=null, sincronizando=false, syncErro='';
+const syncAtivo=()=>!!(db.cfg.syncUrl&&db.cfg.syncCod);
+const pendentesSync=()=>db.rondas.filter(r=>r.syncAt!==r.alterada);
+const naPlanilha=r=>syncAtivo()&&r.syncAt&&r.syncAt===r.alterada;
+function agendarSync(ms){ if(!syncAtivo()||syncT) return; if(!pendentesSync().length&&!db.apagar.length) return; syncT=setTimeout(()=>{syncT=null;sincronizar();},ms||45000); }
+// durante a ronda envia no máximo a cada 45 s (cota diária do Google); ao concluir, ao voltar para a lista e ao sair do app, envia na hora
+async function postar(corpo){
+  const r=await fetch(db.cfg.syncUrl.trim(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(corpo),redirect:'follow'});
+  const t=await r.text(); try{ return JSON.parse(t); }catch(e){ throw new Error('Resposta inesperada do Google. Confira o endereço (deve terminar em /exec) e se a implantação está como "Qualquer pessoa".'); }
+}
+async function sincronizar(){
+  if(!syncAtivo()||sincronizando) return;
+  if(navigator.onLine===false){ syncErro='sem internet'; paintBottom(); return; }
+  const lote=pendentesSync().slice(0,15); const apagar=db.apagar.slice();
+  if(!lote.length&&!apagar.length) return;
+  sincronizando=true; paintBottom();
+  const alt={}; lote.forEach(r=>alt[r.id]=r.alterada);
+  try{
+    const head=linhasCsv([])[0];
+    const res=await postar({codigo:db.cfg.syncCod.trim(),acao:'sync',cabecalho:head,rondas:lote.map(r=>({id:r.id,linhas:linhasCsv([r]).slice(1)})),apagar});
+    if(!res.ok) throw new Error(res.erro||'erro desconhecido');
+    lote.forEach(r=>{ if(r.alterada===alt[r.id]){ r.syncAt=alt[r.id]; r.exportada=true; } });
+    db.apagar=db.apagar.filter(x=>!(res.apagadas||[]).includes(x));
+    db.cfg.ultimaSync=new Date().toISOString(); syncErro='';
+  }catch(e){ syncErro=(e instanceof TypeError)?'sem internet':(e.message||String(e)); }
+  sincronizando=false; save(true);
+  if(view.tela==='home') render(); else paintBottom();
+  if(!syncErro&&pendentesSync().length) agendarSync(500);
+}
+window.addEventListener('online',()=>{ syncErro=''; sincronizar(); });
+setInterval(()=>{ if(pendentesSync().length||db.apagar.length) sincronizar(); },60000);
+function statusSync(){
+  if(!syncAtivo()) return 'envio automático desligado';
+  if(sincronizando) return 'enviando para a planilha...';
+  const n=pendentesSync().length;
+  if(syncErro) return (syncErro==='sem internet'?'sem internet':'falha no envio')+(n?' · '+n+' ronda(s) aguardando':'');
+  if(n) return n+' ronda(s) aguardando envio';
+  return 'tudo na planilha'+(db.cfg.ultimaSync?' · '+new Date(db.cfg.ultimaSync).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'');
+}
 let protegido=null;
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().then(v=>{protegido=v; if(view.tela==='home') render();}).catch(()=>{}); }catch(e){}
 /* Cópia espelhada no IndexedDB: se o localStorage vier vazio ou mais antigo, recupera daqui */
@@ -405,20 +445,28 @@ function render(){
   renderRonda(r);
 }
 
+function htmlBannerSync(){
+  const n=pendentesSync().length;
+  if(syncErro&&syncErro!=='sem internet') return `<div class="banner danger"><span><b>Falha no envio para a planilha:</b> ${esc(syncErro)}</span><button class="btn small" id="syncAgora">Tentar de novo</button></div>`;
+  if(n) return `<div class="banner"><span><b>${n} ronda(s) aguardando envio.</b> ${syncErro==='sem internet'?'Sem internet agora; o envio é automático quando a conexão voltar.':'Enviando em instantes.'}</span><button class="btn small" id="syncAgora">Enviar agora</button></div>`;
+  return `<div class="banner ok"><span>Tudo na planilha${db.cfg.ultimaSync?' · último envio '+new Date(db.cfg.ultimaSync).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}.</span></div>`;
+}
 function renderHome(){
   $('#ttl').firstChild.nodeValue='Ronda NQSP ';
   $('#ttlsub').textContent='HRCAC · NQSPGR / SEQUALI';
   const naoExp=db.rondas.filter(r=>!r.exportada);
-  const atrasadas=naoExp.filter(r=>r.status==='concluida'&&r.concluidaEm&&(Date.now()-Date.parse(r.concluidaEm))>864e5);
+  const atrasadas=(syncAtivo()?pendentesSync():naoExp).filter(r=>r.status==='concluida'&&r.concluidaEm&&(Date.now()-Date.parse(r.concluidaEm))>864e5);
   const lista=db.rondas.map(r=>{
-    const st=r.exportada?'<span class="pill exp">exportada</span>':(r.status==='concluida'?'<span class="pill ok">concluída</span>':'<span class="pill and">em andamento</span>');
+    const st=naPlanilha(r)?'<span class="pill exp">na planilha</span>':(syncAtivo()&&r.status==='concluida')?'<span class="pill and">aguardando envio</span>':r.exportada?'<span class="pill exp">exportada</span>':(r.status==='concluida'?'<span class="pill ok">concluída</span>':'<span class="pill and">em andamento</span>');
     return `<button class="rcard" data-open="${r.id}"><span class="t">${esc(r.setor||'Setor não informado')} · Unid. ${esc(r.unidade)}</span>${st}
       <span class="m">${brData(r.data)} · turno ${esc(r.turno)} · ${r.pacientes.length} paciente(s) · ${esc(r.id)}</span><span class="m">${r.status==='concluida'?'':pendRonda(r).length+' pendência(s)'}</span></button>`;
   }).join('');
   $('#app').innerHTML=`
+    ${syncAtivo()?htmlBannerSync():''}
     ${atrasadas.length?`<div class="banner danger"><span><b>${atrasadas.length} ronda(s) concluída(s) há mais de 24h sem exportar.</b> Se os dados do Safari forem limpos, elas se perdem.</span></div>`:''}
-    ${naoExp.length?`<div class="banner"><span><b>${naoExp.length} ronda(s) ainda não exportada(s).</b> Os dados estão só neste iPad até você exportar.</span><button class="btn primary small" id="expPend">Exportar pendentes</button></div>`
+    ${syncAtivo()?'':naoExp.length?`<div class="banner"><span><b>${naoExp.length} ronda(s) ainda não exportada(s).</b> Os dados estão só neste iPad até você exportar.</span><button class="btn primary small" id="expPend">Exportar pendentes</button></div>`
       :(db.rondas.length?`<div class="banner ok"><span>Tudo exportado.</span></div>`:'')}
+    ${syncAtivo()?'':`<div class="banner"><span><b>Envio automático desligado.</b> Ligue em Configurações para as rondas irem sozinhas para a planilha.</span></div>`}
     <div class="btns"><button class="btn primary" id="nova">Nova ronda</button></div>
     <section class="panel"><h2>Rondas neste aparelho</h2>
       <div class="list">${lista||'<p style="margin:0;color:var(--muted)">Nenhuma ronda ainda. Toque em <b>Nova ronda</b> para começar. A primeira ronda registrada aqui marca o início da linha de base do REG 005 SEG.</p>'}</div>
@@ -442,6 +490,12 @@ function renderHome(){
         <div class="field"><label for="cfgS1">Setores da Unidade I (um por linha)</label><textarea id="cfgS1" rows="5">${esc((db.cfg.setores.I||[]).join('\n'))}</textarea></div>
         <div class="field"><label for="cfgS2">Setores da Unidade II (um por linha)</label><textarea id="cfgS2" rows="5" placeholder="Cadastre aqui os setores do HRCAC II">${esc((db.cfg.setores.II||[]).join('\n'))}</textarea></div>
       </div>
+      <h2 style="margin-top:8px">Envio automático para a planilha Google</h2>
+      <div class="row">
+        <div class="field" style="flex:3 1 320px"><label for="cfgU">Endereço do App da Web (termina em /exec)</label><input id="cfgU" value="${esc(db.cfg.syncUrl)}" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="field" style="flex:1 1 160px"><label for="cfgC">Código de acesso</label><input id="cfgC" value="${esc(db.cfg.syncCod)}" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+      </div>
+      <div class="btns"><button class="btn" id="cfgTeste">Testar conexão</button><span style="align-self:center;font-size:14px;color:var(--muted)">${esc(statusSync())}</span></div>
       <p style="margin:0;font-size:12px;color:var(--muted)">Versão do app ${APP_VERSION} · instrumento ${FORM_VERSION} · ${navigator.onLine?'online':'offline'} · armazenamento ${protegido===true?'protegido pelo sistema':(protegido===false?'sem proteção do sistema (exporte com frequência)':'verificando')} · última exportação: ${db.cfg.ultimaExport?new Date(db.cfg.ultimaExport).toLocaleString('pt-BR'):'nunca'}</p>
     </section>`;
   $('#bottom').hidden=true;
@@ -456,6 +510,12 @@ function renderHome(){
   const ls=v=>v.split('\n').map(x=>x.trim()).filter(Boolean);
   $('#cfgS1').onchange=e=>{db.cfg.setores.I=ls(e.target.value);save();};
   $('#cfgS2').onchange=e=>{db.cfg.setores.II=ls(e.target.value);save();};
+  $('#cfgU').onchange=e=>{db.cfg.syncUrl=e.target.value.trim();syncErro='';save(true);};
+  $('#cfgC').onchange=e=>{db.cfg.syncCod=e.target.value.trim();syncErro='';save(true);};
+  $('#cfgTeste').onclick=async()=>{ db.cfg.syncUrl=$('#cfgU').value.trim(); db.cfg.syncCod=$('#cfgC').value.trim(); save(true);
+    if(!syncAtivo()){ toast('Preencha o endereço e o código.'); return; }
+    try{ const r=await postar({codigo:db.cfg.syncCod,acao:'teste'}); toast(r.ok?(r.mensagem||'Conectado.'):'Erro: '+r.erro); if(r.ok){ syncErro=''; sincronizar(); } }catch(e){ toast('Não conectou: '+e.message); } };
+  if($('#syncAgora')) $('#syncAgora').onclick=()=>{ syncErro=''; sincronizar(); };
 }
 
 function seg(name,opts,val,labels){ return `<div class="seg" role="group" data-seg="${name}">${opts.map((o,i)=>`<button type="button" data-v="${o}" aria-pressed="${val===o}">${labels?labels[i]:o}</button>`).join('')}</div>`; }
@@ -638,17 +698,17 @@ function bindRonda(r){
     document.querySelectorAll('[data-indisp]').forEach(b=>b.onclick=()=>{ const x=b.dataset.indisp; pedirTexto('Por que o paciente do leito '+x+' não pode ser avaliado?','ex.: em procedimento, isolamento, recusou',m=>{ const nv=marcarLeito(r,x,'indisp',m); toque(r); save(true); keep(()=>render()); toast(nv?'Substituto sorteado: '+nv:'Não há mais leitos para sortear.'); }); });
     inp('#f_m34mot',v=>{r.m34motivo=v; $('#f_m34mot').classList.toggle('req',r.m34==='NV'&&!v.trim());});
     $('#f_setor').addEventListener('input',()=>{ $('#ttl').firstChild.nodeValue=(r.setor||'Nova ronda')+' '; });
-    $('#f_setor').addEventListener('change',()=>{ view.editLeitos=false; view.cadTxt=null; const y=window.scrollY; render(); window.scrollTo(0,y); });
+    $('#f_setor').addEventListener('change',()=>{ view.editLeitos=false; view.cadTxt=null; setTimeout(()=>{ if(view.tela==='ronda'&&view.aba==='cab'&&!document.querySelector('.modal')){ const y=window.scrollY; render(); window.scrollTo(0,y); } },350); });
     document.querySelectorAll('[data-seg]').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;r[g.dataset.seg]=b.dataset.v;toque(r);save();render();});
     $('[data-m34]').onclick=e=>{const b=e.target.closest('button');if(!b)return;r.m34=r.m34===b.dataset.v?'':b.dataset.v;toque(r);save();render();};
   } else if(view.aba==='fim'){
     inp('#f_enc',v=>r.encaminhamentos=v); inp('#f_obs',v=>r.obs=v);
     if($('#fimAgora')) $('#fimAgora').onclick=()=>{r.hFim=agora();toque(r);save();render();};
-    const fechar=()=>{ r.status='concluida'; if(!r.hFim) r.hFim=agora(); toque(r); r.concluidaEm=new Date().toISOString(); save(true); render(); confirmar('Ronda concluída. Exportar agora? Até exportar, ela existe só neste iPad.','Exportar agora',()=>exportCsv([r],true)); };
+    const fechar=()=>{ r.status='concluida'; if(!r.hFim) r.hFim=agora(); toque(r); r.concluidaEm=new Date().toISOString(); save(true); render(); if(syncAtivo()){ toast('Ronda concluída. Enviando para a planilha.'); sincronizar(); } else confirmar('Ronda concluída. Exportar agora? Até exportar, ela existe só neste iPad.','Exportar agora',()=>exportCsv([r],true)); };
     $('#concluir').onclick=()=>{ const L=pendRonda(r); if(L.length) confirmar(`Ainda há ${L.length} pendência(s). Concluir mesmo assim?`,'Concluir',fechar); else fechar(); };
     $('#verReg').onclick=()=>{view.tela='reg';render();window.scrollTo(0,0);};
     $('#expEsta').onclick=()=>exportCsv([r],true);
-    $('#delR').onclick=()=>confirmar('Apagar esta ronda do aparelho? '+(r.exportada?'Ela já foi exportada.':'Ela ainda NÃO foi exportada.'),'Apagar',()=>{db.rondas=db.rondas.filter(x=>x!==r);save(true);view={tela:'home'};render();});
+    $('#delR').onclick=()=>confirmar((r.syncAt?'Apagar esta ronda do aparelho e da planilha?':'Apagar esta ronda do aparelho? '+(r.exportada?'Ela já foi exportada.':'Ela ainda NÃO foi exportada.')),'Apagar',()=>{ if(r.syncAt) db.apagar.push(r.id); db.rondas=db.rondas.filter(x=>x!==r);save(true);view={tela:'home'};render();});
   } else {
     const i=+view.aba.slice(1), p=r.pacientes[i];
     inp('#p_leito',v=>{p.leito=v; if(p.origemAuto) p.origem=''; origemAuto(r,p);});
@@ -677,7 +737,7 @@ function paintBottom(){
   let info='';
   if(view.aba.startsWith('p')){ const p=r.pacientes[+view.aba.slice(1)]; if(p){ const q=pendPct(p); info=`${p.pos}: ${ITENS.length-q.vaz.length}/${ITENS.length} itens`; } }
   else info=pendRonda(r).length+' pendência(s) na ronda';
-  bt.innerHTML=`<span class="st">${esc(info)} · ${saveOk?'salvo no iPad':'<b style="color:var(--nc)">falha ao salvar</b>'}</span>
+  bt.innerHTML=`<span class="st">${esc(info)} · ${saveOk?'salvo no iPad':'<b style="color:var(--nc)">falha ao salvar</b>'}${syncAtivo()?' · '+esc(statusSync()):''}</span>
     ${view.aba.startsWith('p')?'<button class="btn small" id="proxVazio">Próximo em branco</button>':''}`;
   if($('#proxVazio')) $('#proxVazio').onclick=()=>{ const el=document.querySelector('.item.vazio'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); } else toast('Todos os itens deste paciente estão marcados.'); };
 }
@@ -742,10 +802,10 @@ function pedirTexto(msg,ph,fn){
 }
 let toastT; function toast(t){ let el=$('.toast'); if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);} el.textContent=t; clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3500); }
 
-$('#btnHome').onclick=()=>{view={tela:'home'};render();window.scrollTo(0,0);};
+$('#btnHome').onclick=()=>{view={tela:'home'};render();window.scrollTo(0,0);sincronizar();};
 window.addEventListener('pagehide',()=>save(true));
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') save(true); });
-load(); render(); recuperarIDB();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ save(true); sincronizar(); } else if(syncAtivo()) sincronizar(); });
+load(); render(); recuperarIDB().then(()=>{ if(syncAtivo()) sincronizar(); });
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
