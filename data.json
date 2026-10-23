@@ -113,7 +113,7 @@
     { "semana": 11, "politica": "Segurança e Gestão da Informação", "inicio": "07/10/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 12, "politica": "Accountability", "inicio": "16/10/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 12, "politica": "Responsabilidade Social e Relações Institucionais", "inicio": "16/10/2026", "status": "concluido", "reuniao": "Sim" },
-    { "semana": 13, "politica": "Política de Operações", "inicio": "", "status": "andamento", "reuniao": "Sim" },
+    { "semana": 13, "politica": "Política de Operações", "inicio": "23/10/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 14, "politica": "Contábil e Financeira", "inicio": "", "status": "nao", "reuniao": "Não" },
     { "semana": 15, "politica": "Gestão de Pessoas", "inicio": "", "status": "nao", "reuniao": "Não" },
     { "semana": 16, "politica": "Gestão Ambiental", "inicio": "", "status": "nao", "reuniao": "Não" },
@@ -121,7 +121,8 @@
   ],
   "_datasProvisorias": [
     { "politica": "Accountability", "inicio": "16/10/2026", "motivo": "liberada dentro da semana 12; dia exato a confirmar" },
-    { "politica": "Responsabilidade Social e Relações Institucionais", "inicio": "16/10/2026", "motivo": "liberada dentro da semana 12; dia exato a confirmar" }
+    { "politica": "Responsabilidade Social e Relações Institucionais", "inicio": "16/10/2026", "motivo": "liberada dentro da semana 12; dia exato a confirmar" },
+    { "politica": "Política de Operações", "inicio": "23/10/2026", "motivo": "liberada dentro da semana 13; dia exato a confirmar" }
   ],
   "_correcoesAplicadas": [
     { "politica": "Política da Qualidade", "original": "18/08/202", "corrigido": "18/08/2026" },
