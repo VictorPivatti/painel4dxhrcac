@@ -8,7 +8,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=20" />
+<link rel="stylesheet" href="style.css?v=23" />
+<script>
+  /* Abertura "Meta atingida": esconde o painel desde o primeiro quadro quando a
+     abertura PODE aparecer nesta aba, para não "piscar" antes dela. Trava de
+     segurança: o painel reaparece sozinho em 2,5s mesmo se algo falhar. */
+  (function () {
+    try {
+      var reduz = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var forcar = /[?&]abertura\b/.test(location.search);
+      var jaViu = false; try { jaViu = !!sessionStorage.getItem("painel4dx-abertura-meta"); } catch (e) {}
+      if (!reduz && (forcar || !jaViu)) {
+        document.documentElement.classList.add("pre-abertura");
+        setTimeout(function () { document.documentElement.classList.remove("pre-abertura"); }, 2500);
+      }
+    } catch (e) {}
+  })();
+</script>
+<style>html.pre-abertura main { visibility: hidden; } html.pre-abertura body { background: #00220a; }</style>
 </head>
 <body>
 <main>
@@ -370,6 +387,7 @@
   </defs>
 </svg>
 
-<script src="app.js?v=21"></script>
+<script src="abertura.js?v=3"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>

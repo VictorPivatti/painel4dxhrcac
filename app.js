@@ -863,9 +863,19 @@ async function main() {
     modeloAtual = buildModel(data);
     render(modeloAtual);
     // Animações são enfeite: se falharem, o painel continua com os valores finais
-    try { animarPainel(); } catch (e) { console.warn("Animações desativadas:", e); }
+    // Animações do painel: se a meta foi batida, primeiro a abertura comemorativa;
+    // o painel só anima depois que ela sai (senão animaria escondido atrás dela)
+    const animar = () => { try { animarPainel(); } catch (e) { console.warn("Animações desativadas:", e); } };
+    const m = modeloAtual;
+    if (m.mci >= m.projeto.metaFinal && typeof window.aberturaMeta === "function") {
+      window.aberturaMeta({ mci: m.mci, meta: m.projeto.metaFinal, disseminadas: m.disseminadas, total: m.totalPoliticas, prazo: m.projeto.prazo }, animar);
+    } else {
+      document.documentElement.classList.remove("pre-abertura"); // meta não batida: mostra o painel já
+      animar();
+    }
     vigiarCabecalho();
   } catch (err) {
+    document.documentElement.classList.remove("pre-abertura");
     console.error(err);
     document.body.innerHTML =
       '<div style="padding:2rem;font-family:sans-serif">Não foi possível carregar os dados do painel. Verifique se o arquivo <code>data.json</code> está publicado junto com esta página.</div>';
