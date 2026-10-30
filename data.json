@@ -79,6 +79,24 @@
     { "numero": 17, "inicio": "16/11/2026", "fim": "20/11/2026", "rotulo": "Semana 17" },
     { "numero": 18, "inicio": "30/11/2026", "fim": "30/11/2026", "rotulo": "Semana 18 — Reunião de Finalização e Entrega do Projeto", "marco": true, "descricao": "Reunião de finalização, avaliação dos resultados e entrega do projeto de disseminação das políticas institucionais.", "notaMarco": "Relatório de Encerramento do Projeto" }
   ],
+  "_reunioesNota": "Reunião semanal com todos os guardiões, registrada por semana (evento à parte da disseminação). O campo reuniao em acoes é histórico e não é mais usado.",
+  "reunioes": {
+    "0": "Sim",
+    "1": "Sim",
+    "2": "Sim",
+    "3": "Não",
+    "4": "Sim",
+    "5": "Sim",
+    "6": "Sim",
+    "7": "Sim",
+    "8": "Sim",
+    "9": "Sim",
+    "10": "Sim",
+    "11": "Sim",
+    "12": "Sim",
+    "13": "Sim",
+    "14": "Sim"
+  },
   "cronograma": {
     "1": ["Ensino e Pesquisa"],
     "2": ["Política da Qualidade", "Gestão de Projetos"],

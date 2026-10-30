@@ -147,9 +147,20 @@ function buildModel(data) {
     : -1;
 
   // Série de reuniões: mesmas políticas já iniciadas, classificadas por reunião realizada
-  const serieReuniao = serieRitmo; // mesma base (políticas com disseminação já ocorrida)
-  const reunioesRealizadas = serieReuniao.filter((x) => x.linha.reuniao === "Sim").length;
-  const reunioesPendentes = serieReuniao.length - reunioesRealizadas;
+  // Reuniões semanais com TODOS os guardiões: um registro por semana (data.reunioes),
+  // independente das políticas. Entram só semanas já iniciadas (abertura incluída);
+  // a semana corrente sem reunião ainda está "em aberto", não é pendência.
+  const regReunioes = data.reunioes || {};
+  const serieReuniao = semanas
+    .filter((s) => (!s.marco || s.numero === 0) && parseDateBR(s.inicio) <= hoje)
+    .map((s) => {
+      const realizada = regReunioes[String(s.numero)] === "Sim";
+      const encerrada = hoje > parseDateBR(s.fim);
+      return { semana: s.numero, realizada, emAberto: !realizada && !encerrada };
+    });
+  const reunioesRealizadas = serieReuniao.filter((x) => x.realizada).length;
+  const reunioesPendentes = serieReuniao.filter((x) => !x.realizada && !x.emAberto).length;
+  const semanasSemReuniao = serieReuniao.filter((x) => !x.realizada && !x.emAberto).map((x) => x.semana);
 
   // --- Adesão ao treinamento (relatório externo, repassado manualmente) ---
   const adesaoPorPolitica = new Map(Object.entries(adesaoTreinamento || {}));
@@ -176,7 +187,7 @@ function buildModel(data) {
     semanaAtual = passadas.length ? passadas[passadas.length - 1] : null;
   }
 
-  const reunioes = 1 + linhas.filter((a) => a.reuniao === "Sim").length;
+  const reunioes = reunioesRealizadas; // semanas com reunião realizada
 
   // --- Próximas disseminações ---
   const proximas = [];
@@ -203,7 +214,7 @@ function buildModel(data) {
     proximas3: proximas.slice(0, 3), statusMci, datasInvalidas,
     noPrazo, totalIniciadas: iniciadas.length, atrasoMedio,
     aderenciaPorChave, serieRitmo, sequenciaNoPrazo, indiceVirada,
-    serieReuniao, reunioesRealizadas, reunioesPendentes,
+    serieReuniao, reunioesRealizadas, reunioesPendentes, semanasSemReuniao,
     linhasOrdenadas: [...linhas].sort((a, b) => a.semana - b.semana),
     semanaByNumero,
     politicaSetor: new Map(politicas.map((p) => [p.nome, p.setor])),
@@ -409,7 +420,15 @@ function renderReuniao(model) {
   serie.forEach((item, i) => {
     const cx = padE + banda * i + banda / 2;
     const x = cx - larguraBarra / 2;
-    const realizada = item.linha.reuniao === "Sim";
+    const realizada = item.realizada;
+    const sem = String(item.semana).padStart(2, "0");
+    rotulos += `<text x="${cx}" y="${H - 8}" class="rot-eixo" text-anchor="middle">${sem}</text>`;
+    if (item.emAberto) {
+      // semana corrente ainda sem reunião: marcador neutro sobre a linha, sem barra
+      barras += `<circle cx="${cx}" cy="${yZero}" r="4" class="reuniao-aberta"/>`;
+      alvos += `<rect x="${padE + banda * i}" y="${padTopo}" width="${banda}" height="${alturaPlot}" fill="transparent" class="alvo-ritmo"><title>Semana ${sem} · em andamento, reunião ainda não registrada</title></rect>`;
+      return;
+    }
     const cor = realizada ? COR_COM_REUNIAO : COR_SEM_REUNIAO;
     const yTopo = realizada ? yZero - altBarra : yZero;
     const r = 4;
@@ -420,30 +439,26 @@ function renderReuniao(model) {
     if (!realizada) barras += `<path d="${d}" fill="none" stroke="${cor}" stroke-width="2" class="halo-pendente"/>`;
     barras += `<path d="${d}" fill="${cor}" class="barra-reuniao ${realizada ? "barra-sim" : "barra-nao"}" style="--i:${i}"/>`;
 
-    rotulos += `<text x="${cx}" y="${H - 8}" class="rot-eixo" text-anchor="middle">${String(item.linha.semana).padStart(2, "0")}</text>`;
-
-    const titulo = `${item.linha.politica} · semana ${String(item.linha.semana).padStart(2, "0")} · ${
-      realizada ? "reunião realizada" : "reunião ainda não realizada"
-    }`;
+    const titulo = `Semana ${sem}${item.semana === 0 ? " (abertura)" : ""} · ${realizada ? "reunião com os guardiões realizada" : "semana sem reunião"}`;
     alvos += `<rect x="${padE + banda * i}" y="${padTopo}" width="${banda}" height="${alturaPlot}" fill="transparent" class="alvo-ritmo"><title>${titulo}</title></rect>`;
   });
 
   secao.querySelector(".ritmo-svg").innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reunião realizada por política, em ordem de semana">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reunião semanal com os guardiões, por semana">
       <line x1="${padE}" y1="${yZero}" x2="${W - padD}" y2="${yZero}" class="linha-zero"/>
       <text x="${padE - 8}" y="${yZero + 4}" class="rot-eixo" text-anchor="end">reunião</text>
       <text x="${padE - 8}" y="${yZero - altBarra + 6}" class="rot-direcao" text-anchor="end">realizada ▲</text>
-      <text x="${padE - 8}" y="${yZero + altBarra - 2}" class="rot-direcao" text-anchor="end">pendente ▼</text>
+      <text x="${padE - 8}" y="${yZero + altBarra - 2}" class="rot-direcao" text-anchor="end">não houve ▼</text>
       ${barras}
       ${rotulos}
       ${alvos}
     </svg>`;
 
   secao.querySelector(".ritmo-leitura").textContent =
-    `${model.reunioesRealizadas} de ${serie.length} reuniões semanais já foram realizadas. ` +
-    (model.reunioesPendentes
-      ? `${model.reunioesPendentes} ainda ${model.reunioesPendentes === 1 ? "está pendente" : "estão pendentes"}.`
-      : "Todas em dia.");
+    `${model.reunioesRealizadas} de ${serie.filter((x) => !x.emAberto).length} semanas com reunião realizada. ` +
+    (model.semanasSemReuniao.length
+      ? `Sem reunião: semana ${model.semanasSemReuniao.map((n) => String(n).padStart(2, "0")).join(", ")}.`
+      : "Nenhuma semana sem reunião.");
 }
 
 /* Capivara na água, desenhada em SVG. Três estados:

@@ -887,3 +887,6 @@ body.com-abertura { overflow: hidden; }
   .ab-peixe { width: 2.4rem; }
 }
 @media (prefers-reduced-motion: reduce) { .abertura { display: none !important; } }
+
+/* v25 · reunião por semana: semana corrente sem registro ainda */
+.reuniao-aberta { fill: var(--card); stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 2 2; }
