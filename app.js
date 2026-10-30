@@ -571,8 +571,10 @@ function renderVeredito(model) {
     v.faltam === 1 ? `política para os ${model.projeto.metaFinal}% (meta: ${v.metaQtd})` : `políticas para os ${model.projeto.metaFinal}% (meta: ${v.metaQtd})`;
   document.getElementById("vn-dias").textContent = v.dias;
   document.getElementById("vn-dias-rot").textContent = `dias até ${model.projeto.prazo}`;
-  document.getElementById("vn-ritmo").textContent = fmtNum1(v.ritmoNecessario);
-  document.getElementById("vn-ritmo-rot").textContent = `por semana necessárias · ritmo atual ${fmtNum1(v.ritmoAtual)}`;
+  document.getElementById("vn-ritmo").textContent = v.faltam ? fmtNum1(v.ritmoNecessario) : "—";
+  document.getElementById("vn-ritmo-rot").textContent = v.faltam
+    ? `por semana necessárias · ritmo atual ${fmtNum1(v.ritmoAtual)}`
+    : `meta já alcançada · ritmo atual ${fmtNum1(v.ritmoAtual)} por semana`;
 }
 
 /* Comemoração: políticas liberadas no Humand nos últimos 7 dias (inclusive).
