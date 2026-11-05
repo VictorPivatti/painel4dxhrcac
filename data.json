@@ -133,7 +133,7 @@
     { "semana": 12, "politica": "Responsabilidade Social e Relações Institucionais", "inicio": "16/10/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 13, "politica": "Política de Operações", "inicio": "23/10/2026", "status": "concluido", "reuniao": "Sim" },
     { "semana": 14, "politica": "Contábil e Financeira", "inicio": "", "status": "nao", "reuniao": "Sim" },
-    { "semana": 15, "politica": "Gestão de Pessoas", "inicio": "", "status": "nao", "reuniao": "Não" },
+    { "semana": 15, "politica": "Gestão de Pessoas", "inicio": "05/11/2026", "status": "concluido", "reuniao": "Não" },
     { "semana": 16, "politica": "Gestão Ambiental", "inicio": "30/10/2026", "status": "concluido", "reuniao": "Não" },
     { "semana": 17, "politica": "Código de Conduta Ética", "inicio": "", "status": "nao", "reuniao": "Não" }
   ],
